@@ -12,10 +12,10 @@ import javax.jws.WebService;
 
 import com.samaylabs.optimus.Dao.DbConnection;
 import com.samaylabs.optimus.Dao.DbConstants;
-import com.samaylabs.optimus.Track.Edge;
 import com.samaylabs.optimus.Track.Graph;
-import com.samaylabs.optimus.Track.Node;
-import com.samaylabs.optimus.Track.NodeResolver;
+import com.samaylabs.optimus.Track.models.Edge;
+import com.samaylabs.optimus.Track.models.Node;
+import com.samaylabs.optimus.Track.models.NodeResolver;
 
 @WebService(name="TrackDefination",serviceName="TrackDefinationService", portName="TrackPort")
 public class TrackService implements DbConstants{

@@ -9,7 +9,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import com.samaylabs.optimus.Dao.DbLogger;
-import com.samaylabs.optimus.Track.Node;
+import com.samaylabs.optimus.Track.models.Node;
 
 /**
  * 

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.samaylabs.optimus.Track.models.Edge;
+import com.samaylabs.optimus.Track.models.Node;
+
 /**
  * 
  * @author Shabab

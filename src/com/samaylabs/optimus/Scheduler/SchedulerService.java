@@ -13,12 +13,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 
-import com.samaylabs.optimus.Communication.StationNode.Ticket;
+import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 import com.samaylabs.optimus.Dao.DbLogger;
 import com.samaylabs.optimus.Dao.TicketDao;
 import com.samaylabs.optimus.Track.Dijkstra;
-import com.samaylabs.optimus.Track.Node;
 import com.samaylabs.optimus.Track.Path;
+import com.samaylabs.optimus.Track.models.Node;
 import com.samaylabs.optimus.Transport.Agv;
 
 public class SchedulerService  extends Thread {

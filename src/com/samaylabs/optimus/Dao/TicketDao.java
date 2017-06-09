@@ -4,7 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import com.samaylabs.optimus.Communication.StationNode.Ticket;
+import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 
 public class TicketDao {
 

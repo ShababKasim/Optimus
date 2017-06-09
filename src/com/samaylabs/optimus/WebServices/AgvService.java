@@ -13,6 +13,8 @@ import javax.jws.WebService;
 
 import com.samaylabs.optimus.Communication.Plc.AgvMethods;
 import com.samaylabs.optimus.Dao.DbConnection;
+import com.samaylabs.optimus.WebServices.models.AgvData;
+import com.samaylabs.optimus.WebServices.models.ListWrapper;
 
 @WebService(name="AgvDeclaration",serviceName="AgvService", portName="AgvPort")
 public class AgvService {

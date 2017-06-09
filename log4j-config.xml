@@ -3,10 +3,10 @@
 <log4j:configuration>
 
 <appender name="DB" class="org.apache.log4j.jdbc.JDBCAppender">
-   <param name="url" value="jdbc:mysql://localhost/Optimus"/>
-   <param name="driver" value="com.mysql.jdbc.Driver"/>
-   <param name="user" value="developer"/>
-   <param name="password" value="developer"/>
+   <param name="URL" value="jdbc:mysql://localhost/optimus"/>
+   <param name="Driver" value="com.mysql.jdbc.Driver"/>
+   <param name="User" value="developer"/>
+   <param name="Password" value="developer"/>
    <layout class="org.apache.log4j.PatternLayout"> 
     <param name="ConversionPattern" 
       value="insert into logs values ('%X{user}', '%d{yyyy-MM-dd HH:mm:ss}' ,'%C','%p','%m')"

@@ -10,6 +10,8 @@ import java.util.List;
 import javax.jws.WebService;
 
 import com.samaylabs.optimus.Dao.DbConnection;
+import com.samaylabs.optimus.WebServices.models.ListWrapper;
+import com.samaylabs.optimus.WebServices.models.Logs;
 
 @WebService(name="LogsDefination",serviceName="LogsService", portName="LogsPort")
 public class LogsService {

@@ -1,6 +1,6 @@
 package com.samaylabs.optimus.Scheduler;
 
-import com.samaylabs.optimus.Communication.StationNode.Ticket;
+import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 import com.samaylabs.optimus.Transport.Agv;
 
 public class Mapper {

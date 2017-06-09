@@ -13,11 +13,4 @@ public class DbLogger {
 		return log;
 	}
 	
-	public Logger getLoggerForScheduler(String user){
-		Logger log = Logger.getLogger("Scheduler");
-		PropertyConfigurator.configure("schedulerlog.properties");
-		MDC.put("user", user); 
-		return log;
-	}
-	
 }

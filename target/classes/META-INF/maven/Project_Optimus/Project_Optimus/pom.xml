@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>Project_Optimus</groupId>
+  <artifactId>Project_Optimus</artifactId>
+  <version>1.0.0-Initial</version>
+  <name>Project Optimus</name>
+  <packaging>jar</packaging>
+  <description>A central coordinating server project for automated guided vehicles</description>
+  
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  
+    <plugins>
+    
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <archive>
+          <manifest>
+            <addClasspath>true</addClasspath>
+            <mainClass>com.samaylabs.optimus.WebServices.OptimusWebService</mainClass>
+          </manifest>
+        </archive>
+        </configuration>
+      </plugin>
+      
+    </plugins>
+ 
+  </build>
+  
+ 
+  <dependencies>
+  	<dependency>
+  		<groupId>net.wimpi</groupId>
+  		<artifactId>jamod</artifactId>
+  		<version>1.2</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.hynnet</groupId>
+  		<artifactId>jxl</artifactId>
+  		<version>2.6.12.1</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>com.att.inno</groupId>
+  		<artifactId>log4j</artifactId>
+  		<version>1.2.11</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>mysql</groupId>
+  		<artifactId>mysql-connector-java</artifactId>
+  		<version>5.1.39</version>
+  	</dependency>
+  </dependencies>
+</project>

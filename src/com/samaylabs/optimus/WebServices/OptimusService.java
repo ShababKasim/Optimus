@@ -6,7 +6,10 @@ import java.util.Vector;
 import javax.jws.WebMethod;
 import javax.jws.WebService;
 
-import com.samaylabs.optimus.Communication.StationNode.Ticket;
+import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
+import com.samaylabs.optimus.WebServices.models.AgvData;
+import com.samaylabs.optimus.WebServices.models.ListWrapper;
+import com.samaylabs.optimus.WebServices.models.MapWrapper;
 
 @WebService(name="OptimusDefination",serviceName="OptimusService", portName="OptimusPort")
 public class OptimusService {

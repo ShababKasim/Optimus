@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 import com.samaylabs.optimus.Dao.TicketDao;
 
 /**

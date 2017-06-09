@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.samaylabs.optimus.WebServices.AgvData;
+import com.samaylabs.optimus.WebServices.models.AgvData;
 
 public class AgvDao {
 

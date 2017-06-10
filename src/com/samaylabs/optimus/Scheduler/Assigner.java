@@ -6,7 +6,8 @@ import com.samaylabs.optimus.Transport.Agv;
 public class Assigner {
 
 	private Agv agv;
-
+	private boolean stop;
+	
 	public Assigner(Agv agv) {
 		super();
 		this.agv = agv;
@@ -20,23 +21,38 @@ public class Assigner {
 		this.agv = agv;
 	}
 
+	public boolean isStop() {
+		return stop;
+	}
+
+	public void setStop(boolean stop) {
+		this.stop = stop;
+	}
+
 	public int execute(Ticket ticket){
 
 		agv.getStateMachine().setCurrentTicket(ticket);
 		agv.getStateMachine().setWork(true);
 
-		while(!agv.getStateMachine().isJobDone()) {
+		while(!isStop()) {
 
 			if(agv.getStateMachine().isNetworkDisconnect()){
+				agv.getStateMachine().setJobDone(false);
 				agv.getStateMachine().setNetworkDisconnect(false);
 				return 3;
-			} if(agv.getStateMachine().isManualMode()){
+			} else if(agv.getStateMachine().isManualMode()){
+				agv.getStateMachine().setJobDone(false);
 				return 2;
-			} if(agv.getStateMachine().isAbort()) {
+			} else if(agv.getStateMachine().isAbort() || agv.getStateMachine().isUiAbort()) {
+				agv.getStateMachine().setUiAbort(false);
+				agv.getStateMachine().setAbort(false);
+				agv.getStateMachine().setJobDone(false);
 				return 1;
+			} else if(agv.getStateMachine().isJobDone()){
+				agv.getStateMachine().setJobDone(false);
+				return 0;
 			}
 		}
-		agv.getStateMachine().setJobDone(false);
 		return 0;
 	}
 

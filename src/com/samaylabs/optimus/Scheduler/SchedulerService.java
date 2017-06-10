@@ -106,8 +106,8 @@ public class SchedulerService  extends Thread {
 				if(servingTicket != null) {
 					log.info("Got Ticket " + servingTicket.getTid() + " from scheduler, Assigned to Agv " + agv.getAgvId());
 					int status = doBusiness();
-					if(status == 3){
-						log.info("Aborted ticket.");
+					if(status == 1){
+						log.info("Ticket Aborted.");
 					} else if(status == 0){
 						log.info("Managed assigned ticket");
 					}
@@ -118,8 +118,8 @@ public class SchedulerService  extends Thread {
 					int status = goCharging();  
 					if(status == -1){
 						log.info("Can't generate charging ticket, No charging station available");
-					} else if(status == 3){
-						log.info("Aborted ticket.");
+					} else if(status == 1){
+						log.info("Ticket Aborted.");
 					} else if(status == 0){
 						log.info("Managed assigned ticket");
 					}
@@ -128,12 +128,12 @@ public class SchedulerService  extends Thread {
 					int status = goParking();
 					if(status == -1){
 						log.info("Can't generate charging ticket, No charging station available");
-					} else if(status == 3){
-						log.info("Aborted ticket.");
+					} else if(status == 1){
+						log.info("Ticket Aborted");
 					} else if(status == 0){
-						agv.getStateMachine().setShouldPark(false);
 						log.info("Managed assigned ticket");
 					}
+					agv.getStateMachine().setShouldPark(false);
 				}
 
 			}

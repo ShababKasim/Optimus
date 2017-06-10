@@ -384,9 +384,6 @@ public class StateMachineAgv {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					//					System.out.println("Agv " + Id + " Should Park..> " + shouldPark);
-					uiAbort = false;
-					abort = false;
 					continue;
 				}
 				log.info("Idle : Starting working for ticket no:" + currentTicket.getTid() + " Agv on position: " + position.getAId());
@@ -397,7 +394,6 @@ public class StateMachineAgv {
 					state = States.Connection;
 					log.error("Idle : Modbus exception  while transfering destination info to HMI");
 				}
-				work = false;
 				ticketResolver(currentTicket);	
 				break; 
 
@@ -412,9 +408,9 @@ public class StateMachineAgv {
 					pathComplete = false;
 					state = States.Drop;
 					currentTicket.setStatus("Pickup-Complete");
+					new TicketDao().updateStatus(currentTicket.getTid(), "Pickup-Complete");
 				} else if(uiAbort){
 					log.info("Pickup : Ticket Aborted from UI");
-					uiAbort = false;
 				}
 				break;
 
@@ -428,12 +424,10 @@ public class StateMachineAgv {
 						position = Path.getNodeById(agvMethods.getCurrentAnchor());
 						if(uiAbort){
 							agvMethods.resetAgv();
-							jobDone = true;
 							state = States.Idle;
 							logc1 = 1;
 							new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 							currentTicket.setStatus("Aborted from UI");
-							uiAbort = false;
 							continue main;
 						}
 						try {
@@ -493,7 +487,6 @@ public class StateMachineAgv {
 					continue;
 				} else if(uiAbort){
 					log.info("TraveltoPark : Ticket Aborted from UI");
-					uiAbort = false;
 					continue;
 				}
 				jump = false;
@@ -507,12 +500,10 @@ public class StateMachineAgv {
 						position = Path.getNodeById(agvMethods.getCurrentAnchor());
 						if(uiAbort){
 							agvMethods.resetAgv();
-							jobDone = true;
 							state = States.Idle;
 							logc1 = 1;
 							new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 							currentTicket.setStatus("Aborted from UI");
-							uiAbort = false;
 							continue main;
 						}
 						try {
@@ -559,11 +550,9 @@ public class StateMachineAgv {
 					logc1 = 1;
 					pathComplete = false;
 				} else if(abort){
-					abort = false;
 					log.info("TraveltoPark : Ticket Aborted by Scheduler");
 				} else if(uiAbort){
 					log.info("TraveltoPark : Ticket Aborted from UI");
-					uiAbort = false;
 				} 
 				/* A very very dirty patch to ensure that if parking misses go to idle, 
 				 * Just because the paint is not proper in Plant*/
@@ -596,7 +585,6 @@ public class StateMachineAgv {
 					pathComplete = false;
 				} else if(uiAbort){
 					log.info("TraveltoPark : Ticket Aborted from UI");
-					uiAbort = false;
 				}
 				break;
 
@@ -643,12 +631,10 @@ public class StateMachineAgv {
 						continue;
 					} else if(uiAbort){
 						agvMethods.resetAgv();
-						jobDone = true;
 						state = States.Idle;
 						logc1 = 1;
 						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 						currentTicket.setStatus("Aborted from UI");
-						uiAbort = false;
 					}
 				} catch (Exception e) {
 					prevState = state;
@@ -680,12 +666,10 @@ public class StateMachineAgv {
 					} 
 					if(uiAbort){
 						agvMethods.resetAgv();
-						jobDone = true;
 						state = States.Idle;
 						logc1 = 1;
 						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 						currentTicket.setStatus("Aborted from UI");
-						uiAbort = false;
 					}
 				} catch (Exception e) {
 					prevState = state;
@@ -725,13 +709,13 @@ public class StateMachineAgv {
 
 		if(source == null){
 			work = false;
-			log.info(state + " -->Resolver : Current Position Invalid");
+			log.info(state + " -->Resolver : Current value of anchor does not exists in defined map");
 			return;
 		}
 
 		if(destination == null){
 			work =false;
-			log.info(state + " -->Resolver : No Destination anchor value found");
+			log.info(state + " -->Resolver : destination value stated in ticket does not exists in defined map");
 			return;
 		} 
 
@@ -824,11 +808,10 @@ public class StateMachineAgv {
 			if(abort){
 				try {
 					agvMethods.setCurrentMove(false);
-					//					jobDone = true;
 				} catch (Exception e) {
 					prevState = state;
 					state = States.Connection;
-					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting abort ticket");
+					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by scheduler");
 					break pathIterator;
 				}
 				state = States.Idle;
@@ -843,11 +826,10 @@ public class StateMachineAgv {
 			if(uiAbort){
 				try {
 					agvMethods.setCurrentMove(false);
-					jobDone = true;
 				} catch (Exception e) {
 					prevState = state;
 					state = States.Connection;
-					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting abort ticket");
+					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by UI");
 					break pathIterator;
 				}
 				state = States.Idle;

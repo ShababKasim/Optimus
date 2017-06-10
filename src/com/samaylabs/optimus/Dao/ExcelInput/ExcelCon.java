@@ -1,4 +1,4 @@
-package com.samaylabs.optimus.Dao;
+package com.samaylabs.optimus.Dao.ExcelInput;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

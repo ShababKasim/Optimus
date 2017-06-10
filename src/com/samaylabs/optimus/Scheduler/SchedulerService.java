@@ -24,7 +24,6 @@ import com.samaylabs.optimus.Transport.Agv;
 public class SchedulerService  extends Thread {
 
 	private final Agv agv;
-	private Mapper mapper;
 	private  AtomicInteger ticketCount;
 	volatile private boolean stop;
 	volatile private Ticket servingTicket;
@@ -32,6 +31,7 @@ public class SchedulerService  extends Thread {
 	private Map<Node,Boolean> parkingStations;
 	private Path path;
 	private Dijkstra dijkstra;
+	private Assigner assigner;
 
 	Logger log;
 
@@ -39,11 +39,11 @@ public class SchedulerService  extends Thread {
 		super("SService " + agv.getAgvId());
 		this.agv = agv;
 		this.ticketCount = ticketCount;
-		this.mapper = new Mapper(agv);
 		this.parkingStations = parkingStations;
 		this.path = path;
 		this.dijkstra = path.getDijkstra();
 		servingTicket = null;
+		this.assigner = new Assigner(agv);
 	}
 
 	public AtomicInteger getTicketCount() {
@@ -70,8 +70,12 @@ public class SchedulerService  extends Thread {
 		return agv;
 	}
 
-	public Mapper getMapper() {
-		return mapper;
+	public Assigner getAssigner() {
+		return assigner;
+	}
+
+	public void setAssigner(Assigner assigner) {
+		this.assigner = assigner;
 	}
 
 	public Ticket getServingTicket() {
@@ -101,25 +105,34 @@ public class SchedulerService  extends Thread {
 
 				if(servingTicket != null) {
 					log.info("Got Ticket " + servingTicket.getTid() + " from scheduler, Assigned to Agv " + agv.getAgvId());
-					doBusiness();
-					log.info("Managed assigned ticket");
+					int status = doBusiness();
+					if(status == 3){
+						log.info("Aborted ticket.");
+					} else if(status == 0){
+						log.info("Managed assigned ticket");
+					}
 				}
 
 
 				if(agv.getStateMachine().isLowCharging()) {
 					int status = goCharging();  
-					if(status == 2 || status == 1 ){
-						//TODO code if parking fails and succeeds
+					if(status == -1){
+						log.info("Can't generate charging ticket, No charging station available");
+					} else if(status == 3){
+						log.info("Aborted ticket.");
+					} else if(status == 0){
+						log.info("Managed assigned ticket");
 					}
 
 				} else if(agv.getStateMachine().isShouldPark()) {
 					int status = goParking();
-					if(status == 2 || status == 1 ){
-						// Parking Failed or no Parking spots were available So below code will abort Parking.
-						//						System.out.println(Thread.currentThread().getName() + "..> Parking Failed");
+					if(status == -1){
+						log.info("Can't generate charging ticket, No charging station available");
+					} else if(status == 3){
+						log.info("Aborted ticket.");
+					} else if(status == 0){
 						agv.getStateMachine().setShouldPark(false);
-					} else {
-						agv.getStateMachine().setShouldPark(false);
+						log.info("Managed assigned ticket");
 					}
 				}
 
@@ -149,7 +162,7 @@ public class SchedulerService  extends Thread {
 
 		Node destin = getNearestParkingStation();
 		if(destin == null)
-			return 2;
+			return -1;
 
 		// Add a condition to check destination is valid, if its invalid getResolverIdByNode() will return -1 
 		int tcount = ticketCount.incrementAndGet();
@@ -163,23 +176,25 @@ public class SchedulerService  extends Thread {
 		new TicketDao().updateAgvinfo(ticket.getTid(), agv.getAgvId(), "Parking");
 		log.info("Generating and Assigning parking ticket "+ tcount +" to Agv " + agv.getAgvId());
 
-		int status = mapper.execute(ticket);
+		int status = assigner.execute(ticket);
 
 		setProvisionTicket(null);
-		if(status == 0){
-			return 1;
+		if(status != 0){
+			new TicketDao().updateStatus(ticket.getTid(), "Parking Failed");
+			return status;
 		}
 		return 0;
 	}
 
 	private int doBusiness(){
 
-		int status = mapper.execute(servingTicket);
+		int status = assigner.execute(servingTicket);
 
 		setServingTicket(null);
 
-		if(status == 0)
-			return 1;
+		if(status != 0){
+			return status;
+		}
 		return 0;
 	}
 
@@ -187,22 +202,25 @@ public class SchedulerService  extends Thread {
 
 		Node destin = getNearestParkingStation();
 		if(destin == null)
-			return 2;
+			return -1;
+		
 		int tcount = ticketCount.incrementAndGet();
 		Ticket ticket = new Ticket(tcount,getUid(),path.getResolverIdByNode(destin));      // Generate charging ticket
+	
 		provisionTicket = ticket;
+		
 		ticket.setType("Charging");
 		ticket.setAgvno(agv.getAgvId());
 		new TicketDao().insertTicket(ticket);
 		new TicketDao().updateAgvinfo(ticket.getTid(), agv.getAgvId(), "Charging");
 		log.info("Generating and Assigning parking ticket "+ tcount +" to Agv " + agv.getAgvId());
 
-		int status = mapper.execute(ticket);
+		int status = assigner.execute(ticket);
 
 		setProvisionTicket(null);
-		if(status == 0){
+		if(status != 0){
 			new TicketDao().updateStatus(ticket.getTid(), "Charging Failed");
-			return 1;
+			return status;
 		}
 		return 0;
 	}

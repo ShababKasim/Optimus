@@ -394,7 +394,14 @@ public class StateMachineAgv {
 					state = States.Connection;
 					log.error("Idle : Modbus exception  while transfering destination info to HMI");
 				}
-				ticketResolver(currentTicket);	
+				int status = ticketResolver(currentTicket);
+				if(status == -1){
+					abort = true;
+					log.error("Ticket execution aborted, current source anchor value does not exists in defined map");
+				} else if(status == -2){
+					abort = true;
+					log.error("Ticket execution aborted,Destination value stated in ticket does not exists in defined map");
+				}
 				break; 
 
 
@@ -699,7 +706,7 @@ public class StateMachineAgv {
 	 * get the list of milestones from ticket and set the state based on ticket
 	 * @param ticket from scheduler
 	 */
-	private final void ticketResolver(Ticket ticket){
+	private final int ticketResolver(Ticket ticket){
 
 		String type = ticket.getType();
 		/* get the list of milestones from ticket and set the state based on ticket */
@@ -709,14 +716,14 @@ public class StateMachineAgv {
 
 		if(source == null){
 			work = false;
-			log.info(state + " -->Resolver : Current value of anchor does not exists in defined map");
-			return;
+			log.error(state + " -->Resolver : Current value of anchor does not exists in defined map");
+			return -1;
 		}
 
 		if(destination == null){
 			work =false;
-			log.info(state + " -->Resolver : destination value stated in ticket does not exists in defined map");
-			return;
+			log.error(state + " -->Resolver : destination value stated in ticket does not exists in defined map");
+			return -2;
 		} 
 
 		currentTicket.setSource((int)source.getAId());
@@ -730,20 +737,20 @@ public class StateMachineAgv {
 				work =false;
 				log.info("Resolver : Already on destination");
 				currentTicket.setStatus("Pickup Complete");
-				return;
+				return 0;
 			} else if(type == "Parking") {
 				state = States.Idle;
 				logc1 = 1;
 				work = false;
 				log.info("Resolver : Already on destination");
 				currentTicket.setStatus("Parking Complete");
-				return;
+				return 0;
 			} else if(type == "Charging") {
 				state = States.Charging;
 				work = false;
 				log.info("Resolver : Already on destination");
 				currentTicket.setStatus("Charging Travel Complete");
-				return;
+				return 0;
 			}
 		}
 
@@ -758,7 +765,7 @@ public class StateMachineAgv {
 			state = States.TravelToCharge;
 		}
 		work = false;
-
+		return 0;
 	}
 
 	public TransferPacket pathGiver() {

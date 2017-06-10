@@ -36,11 +36,11 @@ public class Assigner {
 
 		while(!isStop()) {
 
-			if(agv.getStateMachine().isNetworkDisconnect()){
+			if(agv.getStateMachine().isNetworkDisconnect()) {
 				agv.getStateMachine().setJobDone(false);
 				agv.getStateMachine().setNetworkDisconnect(false);
 				return 3;
-			} else if(agv.getStateMachine().isManualMode()){
+			} else if(agv.getStateMachine().isManualMode()) {
 				agv.getStateMachine().setJobDone(false);
 				return 2;
 			} else if(agv.getStateMachine().isAbort() || agv.getStateMachine().isUiAbort()) {
@@ -48,7 +48,7 @@ public class Assigner {
 				agv.getStateMachine().setAbort(false);
 				agv.getStateMachine().setJobDone(false);
 				return 1;
-			} else if(agv.getStateMachine().isJobDone()){
+			} else if(agv.getStateMachine().isJobDone()) {
 				agv.getStateMachine().setJobDone(false);
 				return 0;
 			}

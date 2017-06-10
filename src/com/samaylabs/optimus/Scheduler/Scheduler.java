@@ -213,10 +213,10 @@ public class Scheduler extends Thread {
 	private void ticketPoller() { 
 		List<Agv> availableAgvs = getAvailableAgvs();
 		if(availableAgvs.size() > 0) {
-			for(Agv agv : availableAgvs){
+			outer : for(Agv agv : availableAgvs){
 				for(Ticket ticket : queue){
 					if(ticket.getStatus().equals("Queued") && ticket.getAgvno() == agv.getAgvId()){
-						break;
+						continue outer;
 					} else if(ticket.getStatus().equals("Unalloted")){
 						ticket.setAgvno(getBestAgv(availableAgvs,ticket).getAgvId());
 						ticket.setStatus("Queued");

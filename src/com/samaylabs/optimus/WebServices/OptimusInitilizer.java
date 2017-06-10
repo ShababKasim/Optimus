@@ -152,9 +152,7 @@ public class OptimusInitilizer {
 	public List<AgvData> getAgvInfo(){
 		List<AgvData> data = new ArrayList<AgvData>();
 		for(Agv agv : agvs){
-			AgvData agvData = new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), agv.getStateMachine().getCurrentTicket(), agv.getStateMachine().getPosition());
-			agvData.setDest(agv.getStateMachine().getNextAnchor());
-			data.add(agvData);
+			data.add(new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), agv.getStateMachine().getCurrentTicket(), agv.getStateMachine().getPosition()));
 		}
 		return data;
 	}

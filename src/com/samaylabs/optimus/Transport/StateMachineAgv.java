@@ -31,7 +31,7 @@ public class StateMachineAgv {
 	volatile private boolean stopped;
 	volatile private Node position;
 	private String ipAddress;
-	int logc1 = 0;
+
 
 	volatile private List<Milestone> currentPath;
 	volatile private int pathIndex = 0;
@@ -50,8 +50,8 @@ public class StateMachineAgv {
 	volatile private List<Long> reserveList;
 	volatile private boolean error;
 	volatile private String errorInfo;
-	volatile private long nextAnchor = 0;
 	protected States returnState;
+	protected States prevLoggedState = null;
 	protected boolean jump = false;
 
 	private final TrafficManager tManager;
@@ -149,10 +149,6 @@ public class StateMachineAgv {
 
 	public Path getPath() {
 		return Path;
-	}
-
-	public long getNextAnchor() {
-		return nextAnchor;
 	}
 
 	public boolean isStopped() {
@@ -309,54 +305,82 @@ public class StateMachineAgv {
 		agvMethods.resetAgv();
 	}
 
+	public void logOnce(String info,String type,States state){
+		if(prevLoggedState == null){
+			prevLoggedState = state;
+			if(type.equals("info"))
+				log.info(info);
+			else if(type.equals("debug"))
+				log.debug(info);
+			else if(type.equals("error"))
+				log.error(info);
+			return;
+		}
+		if(prevLoggedState != state){
+			if(type.equals("info"))
+				log.info(info);
+			else if(type.equals("debug"))
+				log.debug(info);
+			else if(type.equals("error"))
+				log.error(info);
+			prevLoggedState = state;
+		}
+	}
+
 	public void execute() {
 
-		int retrycount = 0;
+		//		int retrycount = 0;
 		log = new DbLogger().getLogger("Agv " + Id);
 		main : while(!isStopped()){
 
 			switch(state) {
 
 			case Connection :
-				log.info("Connection");
+				logOnce("Connection","info",States.Connection);
 				this.available = false;
 				error = true;
 				try {
 					agvMethods.connect();
 					try{
-						Long currentanchor = agvMethods.getCurrentAnchor();
-						if(prevState != States.Connection) {
-							log.info("Connection re-established");
-							state = prevState;
-							position = Path.getNodeById(currentanchor);
-							reserveList.set(0,position.getAId());reserveList.set(1,position.getAId());
-							reserveList.set(2,position.getAId());reserveList.set(3,position.getAId());
-							agvMethods.setCurrentMove(false);
-						} else {
-							log.info("Connection : Connection established with Agv " + Id);
-							state = States.Idle;
-							logc1 = 1;
-							position = Path.getNodeById(currentanchor);
-							reserveList.set(0,position.getAId());reserveList.set(1,position.getAId());
-							reserveList.set(2,position.getAId());reserveList.set(3,position.getAId());
-							agvMethods.setCurrentMove(false);
-						}
-					} catch (NullPointerException e){
-						errorInfo = "Place Agv on Anchor!";
-					} catch(Exception e) {
-						errorInfo = "Agv Disconnected";
-						state = States.Connection;
-						agvMethods.close();
-						Thread.sleep(2000);
+						position = Path.getNodeById(agvMethods.getCurrentAnchor());
+						log.info("Anchor value updated to " + position.getAId());
+					} catch(NullPointerException e) {
+						errorInfo = "Invalid anchor";
+						log.error("Recieved Invalid anchor from Agv. Retrying..");
+						continue;
+					} catch(Exception e){
+						System.out.print(".");
+						continue;
+					}
+					if(prevState != States.Connection) {
+						log.info("Connection re-established with Agv " + Id);
+						state = prevState;
+						reserveList.set(0,position.getAId());reserveList.set(1,position.getAId());
+						reserveList.set(2,position.getAId());reserveList.set(3,position.getAId());
+						agvMethods.setCurrentMove(false);
+					} else {
+						log.info("Connection : Connection established with Agv " + Id);
+						state = States.Idle;
+						reserveList.set(0,position.getAId());reserveList.set(1,position.getAId());
+						reserveList.set(2,position.getAId());reserveList.set(3,position.getAId());
+						agvMethods.setCurrentMove(false);
+					}
+					if(uiAbort){
+						agvMethods.resetAgv();
+						prevState = States.Idle;
+						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
+						currentTicket.setStatus("Aborted from UI");
+						log.info("Connection : Ticket Aborted from UI");
 					}
 				} catch (Exception e) {
 					state = States.Connection;
 					System.out.print(".");
-					retrycount++;
+					continue;
+					/*retrycount++;
 					if(retrycount == 15){
 						networkDisconnect = true;
 						retrycount = 0;
-					}
+					}*/
 				}
 				error = false;
 				break;
@@ -364,16 +388,17 @@ public class StateMachineAgv {
 			case Idle : 
 				this.available = true;
 				error = false;
-				if(logc1 == 1){
-					log.debug("Idle");
-					logc1 = 0;
-				}
+				logOnce("Idle","debug",States.Idle);
 				if(!work) {
 					try {
 						lowCharging = agvMethods.lowCharging();
+						if(position.getAId() != agvMethods.getCurrentAnchor())
+							log.info("Idle : Agv moved on anchor " + agvMethods.getCurrentAnchor());
 						position = Path.getNodeById(agvMethods.getCurrentAnchor());
 						reserveList.set(0,position.getAId());reserveList.set(1,position.getAId());
 						reserveList.set(2,position.getAId());reserveList.set(3,position.getAId());
+					} catch (NullPointerException e) {
+						log.error("Idle : Invalid current anchor value found. Retrying..");
 					} catch (Exception e) {
 						prevState = state;
 						state = States.Connection;
@@ -406,7 +431,7 @@ public class StateMachineAgv {
 
 
 			case Pickup :
-				log.debug("Pickup");
+				logOnce("Pickup","debug",States.Pickup);
 				this.available = false;
 				log.info("Pickup : Moving agv");
 				agvMover();
@@ -422,17 +447,18 @@ public class StateMachineAgv {
 				break;
 
 			case Drop :
-				log.debug("Drop");
+				logOnce("Drop","debug",States.Drop);
 				this.available = false;
 				try {
 					log.info("Drop : Hooking Agv.");
 					while(!(agvMethods.isHooked() && agvMethods.dropAnchor() > 0)){
 						agvMethods.startHooking();
+						if(position.getAId() != agvMethods.getCurrentAnchor())
+							log.info("Drop : Agv moved on anchor " + agvMethods.getCurrentAnchor());
 						position = Path.getNodeById(agvMethods.getCurrentAnchor());
 						if(uiAbort){
 							agvMethods.resetAgv();
 							state = States.Idle;
-							logc1 = 1;
 							new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 							currentTicket.setStatus("Aborted from UI");
 							continue main;
@@ -453,12 +479,22 @@ public class StateMachineAgv {
 
 				// Start : Path finding code Block
 				if(!jump) {
-					Node source = null;
 					Node destination = null;
-
 					try {
-						source = this.getCurrentPosition();
-						currentTicket.setSdestination((int)agvMethods.dropAnchor());
+						position = this.getCurrentPosition();
+						try{
+							destination = Path.getNodeFromResolverById((int)agvMethods.dropAnchor());
+							this.currentPath = Path.resolveMilestone(Path.getShortestPath(position, destination,dijkstra));
+						} catch (Exception e) {
+							try {
+								agvMethods.resetDropAnchor();
+							} catch (Exception e1) {
+								continue;
+							}
+							log.error("Drop : Invalid Destination given from HMI");
+							continue;
+						}
+						currentTicket.setSdestination((int)destination.getAnchor_id());
 						new TicketDao().updateSdest(currentTicket.getTid() , (int)agvMethods.dropAnchor());
 						agvMethods.setInfoDest(currentTicket.getSdestination());
 						agvMethods.stopHooking();
@@ -467,19 +503,6 @@ public class StateMachineAgv {
 						prevState = state;
 						state = States.Connection;
 						log.error("Drop : Modbus exception  while getting Drop Anchor info & Current Position");
-						continue;
-					}
-
-					try{
-						destination = Path.getNodeFromResolverById(currentTicket.getSdestination());
-						this.currentPath = Path.resolveMilestone(Path.getShortestPath(source, destination,dijkstra));
-					} catch (Exception e) {
-						try {
-							agvMethods.resetDropAnchor();
-						} catch (Exception e1) {
-							continue;
-						}
-						log.error("Drop : Invalid Destination given from HMI");
 						continue;
 					}
 
@@ -494,6 +517,7 @@ public class StateMachineAgv {
 					continue;
 				} else if(uiAbort){
 					log.info("TraveltoPark : Ticket Aborted from UI");
+					jump = false;
 					continue;
 				}
 				jump = false;
@@ -504,11 +528,12 @@ public class StateMachineAgv {
 					log.info("Drop : UnHooking Agv");
 					while(agvMethods.isHooked()){
 						agvMethods.startHooking();
+						if(position.getAId() != agvMethods.getCurrentAnchor())
+							log.info("Drop : Agv moved on anchor " + agvMethods.getCurrentAnchor());
 						position = Path.getNodeById(agvMethods.getCurrentAnchor());
 						if(uiAbort){
 							agvMethods.resetAgv();
 							state = States.Idle;
-							logc1 = 1;
 							new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 							currentTicket.setStatus("Aborted from UI");
 							continue main;
@@ -521,7 +546,7 @@ public class StateMachineAgv {
 					}    // Wait until get UnHooked info from HMI
 					agvMethods.stopHooking();
 					agvMethods.resetInfoDest();
-				} catch (Exception e1) {
+				} catch (Exception e1) { 
 					prevState = state;
 					state = States.Connection;
 					log.error("Drop : Modbus exception  while getting hooking info");
@@ -530,16 +555,16 @@ public class StateMachineAgv {
 				log.info("Drop : Pickup ticket " + currentTicket.getTid() + " served" );
 				if(pathComplete){
 					jobDone = true;
+					pathComplete = false;
 					log.info("Pickup : Destination reached");
 					state = States.Idle;
-					logc1 = 1;
 				}
 				new TicketDao().updateStatus(currentTicket.getTid(), "Success");
 				currentTicket.setStatus("Success");
 				break;
 
 			case TravelToPark : 
-				log.debug("Travelling to Park");
+				logOnce("Travel To Park","debug",States.TravelToPark);
 				this.available = true;
 				log.info("TraveltoPark : Moving Agv");
 				try {
@@ -554,7 +579,6 @@ public class StateMachineAgv {
 					log.info("TraveltoPark : Destination reached");
 					jobDone = true;
 					state = States.Idle;
-					logc1 = 1;
 					pathComplete = false;
 				} else if(abort){
 					log.info("TraveltoPark : Ticket Aborted by Scheduler");
@@ -566,7 +590,6 @@ public class StateMachineAgv {
 				if(state == States.Pause){
 					log.info("TraveltoPark : Destination reached");
 					state = States.Idle;
-					logc1 = 1;
 					jobDone = true;
 					currentTicket.setStatus("Dropped, Parking missed");
 					new TicketDao().updateStatus(currentTicket.getTid(), "Dropped, Parking missed");
@@ -575,7 +598,7 @@ public class StateMachineAgv {
 				break;
 
 			case TravelToCharge :
-				log.debug("Travelling to Charge");
+				logOnce("Travel To Charge","debug",States.TravelToCharge);
 				this.available = false;
 				log.info("TraveltoCharge : Moving Agv");
 				try {
@@ -590,13 +613,14 @@ public class StateMachineAgv {
 					log.info("TraveltoCharge : Destination reached");
 					state = States.Charging;
 					pathComplete = false;
+					jobDone = true;
 				} else if(uiAbort){
 					log.info("TraveltoPark : Ticket Aborted from UI");
 				}
 				break;
 
 			case Charging :
-				log.debug("Charging");
+				logOnce("Charging","debug",States.Charging);
 				this.available = false;
 				try {
 					if(agvMethods.isCharged()){
@@ -615,7 +639,7 @@ public class StateMachineAgv {
 				break;
 
 			case Pause :
-				log.debug("Pause");
+				logOnce("Pause","debug",States.Pause);
 				this.available = false;
 				error = true;
 				errorInfo = "Agv Took wrong path";
@@ -628,9 +652,8 @@ public class StateMachineAgv {
 						agvMethods.resetPauseScreen();
 						continue;
 					} else if(agvMethods.isAbort()){
+						abort = true;
 						state = States.Idle;
-						logc1 = 1;
-						jobDone = true;
 						agvMethods.resetAgv();
 						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from HMI");
 						currentTicket.setStatus("Aborted from HMI");
@@ -639,7 +662,6 @@ public class StateMachineAgv {
 					} else if(uiAbort){
 						agvMethods.resetAgv();
 						state = States.Idle;
-						logc1 = 1;
 						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 						currentTicket.setStatus("Aborted from UI");
 					}
@@ -651,7 +673,7 @@ public class StateMachineAgv {
 				break;
 
 			case Notification :
-				log.debug("Notification");
+				logOnce("Notification","debug",States.Notification);
 				this.available = false;
 				error = true;
 				try {
@@ -669,12 +691,11 @@ public class StateMachineAgv {
 						error = false;
 						continue;
 					} else {
-						errorInfo = "Agv is Out of Line error!";
+						errorInfo = "Agv is Out of Line!";
 					} 
 					if(uiAbort){
 						agvMethods.resetAgv();
 						state = States.Idle;
-						logc1 = 1;
 						new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
 						currentTicket.setStatus("Aborted from UI");
 					}
@@ -684,12 +705,6 @@ public class StateMachineAgv {
 					log.error("Idle : Modbus exception  while transfering destination info to HMI");
 				}
 				break;
-
-			case Parking:
-				log.debug("Parking");
-				this.available = true;
-				break;
-
 			}
 
 			try {
@@ -740,7 +755,6 @@ public class StateMachineAgv {
 				return 0;
 			} else if(type == "Parking") {
 				state = States.Idle;
-				logc1 = 1;
 				work = false;
 				log.info("Resolver : Already on destination");
 				currentTicket.setStatus("Parking Complete");
@@ -809,134 +823,136 @@ public class StateMachineAgv {
 	public void agvMover() {
 
 		long pid = 0;
-		pathIterator : while( currentPath.get(currentPath.size()-1).getSource().getAId() != position.getAId() )  {
+		try{
+			pathIterator : while( currentPath.get(currentPath.size()-1).getSource().getAId() != position.getAId() )  {
 
-			/*Start: Check if Scheduler aborted ticket*/
-			if(abort){
-				try {
-					agvMethods.setCurrentMove(false);
-				} catch (Exception e) {
-					prevState = state;
-					state = States.Connection;
-					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by scheduler");
+				/*Start: Check if Scheduler aborted ticket*/
+				if(abort){
+					try {
+						agvMethods.setCurrentMove(false);
+					} catch (Exception e) {
+						prevState = state;
+						state = States.Connection;
+						log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by scheduler");
+						break pathIterator;
+					}
+					state = States.Idle;
+					new TicketDao().updateStatus(currentTicket.getTid(), "Aborted by Scheduler");
+					currentTicket.setStatus("Aborted by Scheduler");
 					break pathIterator;
 				}
-				state = States.Idle;
-				logc1 = 1;
-				new TicketDao().updateStatus(currentTicket.getTid(), "Aborted by Scheduler");
-				currentTicket.setStatus("Aborted by Scheduler");
-				break pathIterator;
-			}
-			/*End: Check if Scheduler aborted ticket*/
+				/*End: Check if Scheduler aborted ticket*/
 
-			/*Start: Check if Scheduler aborted ticket*/
-			if(uiAbort){
-				try {
-					agvMethods.setCurrentMove(false);
-				} catch (Exception e) {
-					prevState = state;
-					state = States.Connection;
-					log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by UI");
+				/*Start: Check if Scheduler aborted ticket*/
+				if(uiAbort){
+					try {
+						agvMethods.setCurrentMove(false);
+					} catch (Exception e) {
+						prevState = state;
+						state = States.Connection;
+						log.error(this.state + " -->Mover : breaking main due to modbus exception while setting current move false made by UI");
+						break pathIterator;
+					}
+					state = States.Idle;
+					new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
+					currentTicket.setStatus("Aborted from UI");
 					break pathIterator;
 				}
-				state = States.Idle;
-				logc1 = 1;
-				new TicketDao().updateStatus(currentTicket.getTid(), "Aborted from UI");
-				currentTicket.setStatus("Aborted from UI");
-				break pathIterator;
-			}
-			/*End: Check if Scheduler aborted ticket*/
+				/*End: Check if Scheduler aborted ticket*/
 
-			/*Start: Check if Agv Confronts Error like out of track and Obstacle*/
-			try {
-				if(agvMethods.isError()){
+				/*Start: Check if Agv Confronts Error like out of track and Obstacle*/
+				try {
+					if(agvMethods.isError()){
+						returnState = state;
+						pathComplete = false;
+						state = States.Notification;
+						break pathIterator;
+					}
+				} catch (Exception e2) {
+					prevState = state;
+					state = States.Connection;
+					log.error(this.state + " --> Mover : breaking main due to modbus exception while getting Error info");
+					pathComplete = false;
+					break pathIterator;
+				}
+				/*End: Check if Agv Confronts Error like out of track and Obstacle*/
+
+				try {
+					position = Path.getNodeById(agvMethods.getCurrentAnchor());
+				} catch (Exception e1) {
+					prevState = state;
+					state = States.Connection;
+					log.error(this.state + " -->Mover : breaking main due to modbus exception while getting current position");
+					pathComplete = false;
+					break pathIterator;
+				}
+
+				/*Start: Check if Agv is on right Path*/
+				int expectedAnchor = 0;
+				for(Milestone m : currentPath) {
+					if(m.getSource().equals(position)) {
+						pathIndex = currentPath.indexOf(m);
+						expectedAnchor = 1;
+					}
+				}
+
+				if(expectedAnchor < 1) {
+					try {
+						agvMethods.setCurrentMove(false);
+					} catch (Exception e) {
+						prevState = state;
+						state = States.Connection;
+						log.error( this.state + " -->Mover :  modbus Exception while setting current move off due to unexpected path");
+						pathComplete = false;
+						break pathIterator;
+					}
+					if(state == States.Drop)
+						jump = true;
 					returnState = state;
 					pathComplete = false;
-					state = States.Notification;
+					state = States.Pause;
 					break pathIterator;
 				}
-			} catch (Exception e2) {
-				prevState = state;
-				state = States.Connection;
-				log.error(this.state + " --> Mover : breaking main due to modbus exception while getting Error info");
-				pathComplete = false;
-				break pathIterator;
-			}
-			/*End: Check if Agv Confronts Error like out of track and Obstacle*/
+				/*End: Check if Agv is on right Path*/
 
-			try {
-				position = Path.getNodeById(agvMethods.getCurrentAnchor());
-			} catch (Exception e1) {
-				prevState = state;
-				state = States.Connection;
-				log.error(this.state + " -->Mover : breaking main due to modbus exception while getting current position");
-				pathComplete = false;
-				break pathIterator;
-			}
 
-			/*Start: Check if Agv is on right Path*/
-			int expectedAnchor = 0;
-			for(Milestone m : currentPath) {
-				if(m.getSource().equals(position)) {
-					pathIndex = currentPath.indexOf(m);
-					expectedAnchor = 1;
-				}
-			}
 
-			if(expectedAnchor < 1) {
+				/*Start transfer packet to Agv*/
+				TransferPacket tp = pathGiver();
 				try {
-					agvMethods.setCurrentMove(false);
+					agvMethods.setCurrentAnchor(tp.getCurrentAnchor());
+					agvMethods.setCurrentTypeAction(tp.getCurrentType(), tp.getCurrentAction());
+					agvMethods.setCurrentMove(tp.getcMove());
+					agvMethods.setNextAnchor(tp.getNextAnchor());
+					agvMethods.setNextTypeAction(tp.getNextType(), tp.getNextAction());
+					agvMethods.setNextMove(tp.getnMove()); 
+					agvMethods.setHeartbeat();
+					if(pid != tp.getCurrentAnchor()){
+						log.info(tp.toString());  // Conditional logging only after value change
+						pid = tp.getCurrentAnchor();
+					}
 				} catch (Exception e) {
 					prevState = state;
 					state = States.Connection;
-					log.error( this.state + " -->Mover :  modbus Exception while setting current move off due to unexpected path");
+					log.info( this.state + " -->Mover : breaking main due to modbus exception! while transferring packet to agv");
 					pathComplete = false;
 					break pathIterator;
 				}
-				if(state == States.Drop)
-					jump = true;
-				returnState = state;
-				pathComplete = false;
-				state = States.Pause;
-				break pathIterator;
-			}
-			/*End: Check if Agv is on right Path*/
+				/*End transfer packet to Agv*/
 
 
-
-			/*Start transfer packet to Agv*/
-			TransferPacket tp = pathGiver();
-			nextAnchor = tp.getNextAnchor();
-			try {
-				agvMethods.setCurrentAnchor(tp.getCurrentAnchor());
-				agvMethods.setCurrentTypeAction(tp.getCurrentType(), tp.getCurrentAction());
-				agvMethods.setCurrentMove(tp.getcMove());
-				agvMethods.setNextAnchor(tp.getNextAnchor());
-				agvMethods.setNextTypeAction(tp.getNextType(), tp.getNextAction());
-				agvMethods.setNextMove(tp.getnMove()); 
-				agvMethods.setHeartbeat();
-				if(pid != tp.getCurrentAnchor()){
-					log.info(tp.toString());  // Conditional logging only after value change
-					pid = tp.getCurrentAnchor();
+				/*Start break after reaching final anchor*/
+				if(pathIndex == currentPath.size()-1){
+					pathComplete = true;
+					break pathIterator;					// Condition to break after reaching final anchor 
 				}
-			} catch (Exception e) {
-				prevState = state;
-				state = States.Connection;
-				log.info( this.state + " -->Mover : breaking main due to modbus exception! while transferring packet to agv");
-				pathComplete = false;
-				break pathIterator;
+				/*End break after reaching final anchor*/
 			}
-			/*End transfer packet to Agv*/
 
-
-			/*Start break after reaching final anchor*/
-			if(pathIndex == currentPath.size()-1){
-				pathComplete = true;
-				break pathIterator;					// Condition to break after reaching final anchor 
-			}
-			/*End break after reaching final anchor*/
+		} catch(NullPointerException e){
+			log.info("Agv Mover : Invalid current anchor value");
+			return;
 		}
-
 	}
 
 }

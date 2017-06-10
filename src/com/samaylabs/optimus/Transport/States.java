@@ -5,7 +5,6 @@ public enum States {
 	Idle,
 	
 	TravelToPark,
-	Parking,
 	
 	Pickup,
 	Drop,

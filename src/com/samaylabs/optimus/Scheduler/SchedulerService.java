@@ -63,7 +63,10 @@ public class SchedulerService  extends Thread {
 	}
 
 	public void stopSchedulerService() {
+		if(assigner != null)
+			assigner.setStop(true);
 		this.stop = true;
+		
 	}
 
 	public Agv getAgv() {

@@ -2,11 +2,11 @@ package com.samaylabs.optimus.WebServices;
 
 import javax.xml.ws.Endpoint;
 
-public class OptimusWebService {
+public class OptimusEndpoint {
 
 	public static void main(String[] args) {
 		
-		Thread.currentThread().setName("OptimusWebService");
+		Thread.currentThread().setName("EndpointOptimus");
 		
 		String ip = "localhost";
 		

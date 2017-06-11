@@ -1,12 +1,24 @@
 package com.samaylabs.optimus.WebServices;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.jws.WebMethod;
 import javax.jws.WebService;
 
+import com.samaylabs.optimus.Communication.StationNode.NodeServer;
+import com.samaylabs.optimus.Communication.StationNode.NodeWorker;
 import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
+import com.samaylabs.optimus.Dao.AgvDao;
+import com.samaylabs.optimus.Dao.TicketDao;
+import com.samaylabs.optimus.Scheduler.Scheduler;
+import com.samaylabs.optimus.Track.Path;
+import com.samaylabs.optimus.Track.models.Node;
+import com.samaylabs.optimus.Transport.Agv;
+import com.samaylabs.optimus.Transport.TrafficManager;
 import com.samaylabs.optimus.WebServices.models.AgvData;
 import com.samaylabs.optimus.WebServices.models.ListWrapper;
 import com.samaylabs.optimus.WebServices.models.MapWrapper;
@@ -14,35 +26,75 @@ import com.samaylabs.optimus.WebServices.models.MapWrapper;
 @WebService(name="OptimusDefination",serviceName="OptimusService", portName="OptimusPort")
 public class OptimusService {
 
-	OptimusInitilizer init = new OptimusInitilizer();
+	volatile  Vector<Ticket> queue;
+	protected List<Agv> agvs;
+	protected Map<Node,Boolean> parkingStations;
+	protected List<NodeWorker> nodeWorkers;
 	
-	OptimusService(){
-		Thread.currentThread().setName("OptimusService");
+	protected AtomicInteger ticketCount;
+	protected Path path;
+	protected NodeServer nodeServer;
+	protected TrafficManager tManager ;
+	protected Scheduler scheduler;
+	
+	
+	public OptimusService(){
+		this.queue = new Vector<Ticket>();
+		this.agvs = new ArrayList<Agv>();
+		this.ticketCount = new AtomicInteger();
+		this.path = new Path();
+		this.parkingStations = new HashMap<Node,Boolean>();
+		this.nodeWorkers = new ArrayList<NodeWorker>();
+		
+		for(Node node : path.getParkingNodes()){
+			parkingStations.put(node, true);
+		}
+	}
+
+	/**Methods related to Powering On and Off optimus**/
+	
+	public void initilizeAll(){
+		List<AgvData> agvList = new AgvDao().retriveAgv();
+		tManager = new TrafficManager(path.getAnchorIds(), agvs, parkingStations);
+		for(AgvData d : agvList){
+			agvs.add(new Agv(d.getId(),d.getName(),d.getIpaddress(),d.getPort(),tManager,path));
+		}
+		nodeServer = new NodeServer(9000,queue,ticketCount,nodeWorkers);
+		scheduler = new Scheduler(agvs, queue, ticketCount, path, parkingStations,nodeWorkers);
 	}
 	
-	public ListWrapper startScheduler(){
+	public void initilizeTrafficManager(){
+		tManager = new TrafficManager(path.getAnchorIds(), this.agvs, this.parkingStations);
+		tManager.start();
+	}
+	
+	public void initilizeScheduler(){
+		scheduler = new Scheduler(agvs, queue, ticketCount, path, parkingStations,nodeWorkers);
+		scheduler.start();
+	}
+	
+	public void initilizeNodeServer(){
+		nodeServer = new NodeServer(9000,queue,ticketCount,nodeWorkers);
+		nodeServer.start();
+	}
+	
+	public ListWrapper InitilizeAndStart(){
+		initilizeAll();
 		ListWrapper log = new ListWrapper();
-		try{
-			init.initAgv();
-			log.add("Initilized Agv from Database");
-		} catch (Exception e){
-			log.add("Failled to initilize Agv Need to break, Exception in Creating Agv");
-			return log;
-		}
 		try {
-			init.startNodeServer();
+			nodeServer.start();
 			log.add("Node Server Started successfully.");
 		} catch (Exception e) {
 			log.add("Unable to Start Node Server");
 		}
 		try {
-			init.startTrafficManager();
+			tManager.start();
 			log.add("Traffic Manager Started");
 		} catch (Exception e) {
 			log.add("Unable to Start Traffic Manager");
 		}
 		try {
-			init.startScheduler();
+			scheduler.start();
 			log.add("Started Scheduler, Check Logs for further Information");
 		} catch (Exception e) {
 			log.add("Unable to Start Scheduler");
@@ -50,85 +102,186 @@ public class OptimusService {
 		return log;
 	}
 	
-	public boolean stopNodeServer(){
-		try {
-			init.stopNodeServer();
-		} catch (Exception e) {
-			return false;
+	public boolean stopAndDeinitilize() throws Exception {
+		if(nodeServer.isAlive()){
+			nodeServer.stopServer();
+			nodeServer.join();
 		}
+		if(tManager.isAlive()){
+			tManager.stoptManager();
+			tManager.join();
+		}
+		if(scheduler.isAlive()){
+			scheduler.stopScheduler();
+			scheduler.join();
+		}	
+		for(Agv a : agvs) {
+			a.getStateMachine().resetAgv();
+			a.interrupt();
+			a.getStateMachine().setStop();
+		}
+		agvs.clear();
+		parkingStations.clear();
+		new TicketDao().backupAndDeleteTickets();
 		return true;
 	}
 	
-	public boolean stopScheduler(){
-		try {
-			init.stopScheduler();
-		} catch (Exception e) {
-			return false;
-		}
-		return true;
+	/**End : Methods related to Powering On and Off optimus**/
+	
+	
+	/**Methods related to TrafficManager and Power**/
+	
+	public MapWrapper getActiveSignals(){
+		if(tManager != null)
+			return new MapWrapper(tManager.getSignals());
+		else
+			return new MapWrapper();
+	}
+
+	public int getActiveNode(){
+		return nodeWorkers.size();
 	}
 	
 	public ListWrapper powerStatus(){
-		return init.powerStatus();
+		ListWrapper log = new ListWrapper();
+		try {
+			if(nodeServer.isAlive())
+				log.add("Node Server: ON");
+			else
+				log.add("Node Server: OFF");
+		} catch (Exception e) {
+			log.add("Node Server: OFF");
+		}
+		try {
+			if(tManager.isAlive())
+				log.add("Traffic Manager: ON");
+			else
+				log.add("Traffic Manager: OFF");
+		} catch (Exception e) {
+			log.add("Traffic Manager: OFF");
+		}
+		try {
+			if(scheduler.isAlive())
+				log.add("Scheduler : ON");
+			else
+				log.add("Scheduler : OFF");
+		} catch (Exception e) {
+			log.add("Scheduler : OFF");
+		}
+		for(Agv agv : agvs){
+			if(agv.isAlive())
+				log.add(agv.getAgvName() + " : ON");
+			else
+				log.add(agv.getAgvName() + " : OFF");
+		}
+		return log;
 	}
 	
 	public int powerStatusKey(){
-		return init.powerStatusKey();
-	} 
-	
-	@WebMethod(action="insert_ticket")
-	public boolean insertTicket(int Id, long  uid, int pdest, String type, String status) {
-		Ticket t = new Ticket( Id,uid,pdest,type,status);
-		init.getQueue().add(t);
-		return true;
+		try {
+			if(!nodeServer.isStopped() && !tManager.isStop() && !scheduler.isStopped())
+				return 1;
+			else
+				return -1;
+		} catch (Exception e) {
+			return -1;
+		}
 	}
 	
-	@WebMethod
-	public boolean removeTicket(int index){
-		return init.removeTicket(index);
-	}
 	
-	@WebMethod
-	public boolean alterTicket(int index1, int index2) {
-		Ticket temp1 = init.getQueue().get(index1);
-		Ticket temp2 = init.getQueue().get(index2);
-		init.getQueue().set(index1, temp2);
-		init.getQueue().set(index2, temp1);
-		return true;
-	}
+	/**End : Methods related to TrafficManager and Power**/
+	
+	/**Methods related to Agv**/
 
-	public Vector<Ticket> getQueue() {
-		return init.getQueue();
-	}
-	
-	public boolean setTicketToAgv(int index,int Agvno,String status){
-		init.getQueue().get(index).setAgvno(Agvno);
-		init.getQueue().get(index).setStatus(status);
-		return true;
-	}
-	
 	public List<AgvData> getAgvInfo(){
-		return init.getAgvInfo();
+		List<AgvData> data = new ArrayList<AgvData>();
+		for(Agv agv : agvs){
+			data.add(new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), agv.getStateMachine().getCurrentTicket(), agv.getStateMachine().getPosition()));
+		}
+		return data;
 	}
 	
-	public int getActiveNode(){
-		return init.getActiveNode();
-	}
-
 	public ListWrapper areErrors(){
-		return init.areErrors();
-	}
-	
-	public boolean uiAbort(int id){
-		return init.uiAbort(id);
-	}
-	
-	public MapWrapper getActiveSignals(){
-		return init.getActiveSignals();
+		ListWrapper log = new ListWrapper();
+		for(Agv agv : agvs){
+			if(agv.getStateMachine().isError()){
+				log.add(agv.getAgvName() + "-> InActive : " + agv.getStateMachine().getErrorInfo());
+			} else {
+				log.add(agv.getAgvName() + "-> Active");
+			}
+		}	
+		return log;
 	}
 	
 	public boolean isErrors(){
-		return init.isErrors();
+		boolean temp = false;
+		for(Agv agv : agvs){
+			if(agv.getStateMachine().isError()){
+				temp = true;
+			} 
+		}	
+		return temp;
 	}
-}
+	
+	public boolean uiAbort(int id){
+		Long uid = (long)0;
+		for(Agv a : agvs){
+			if(a.getAgvId() == id){
+				uid = a.getStateMachine().getCurrentTicket().getUid();
+				a.getStateMachine().setUiAbort(true);
+				return true;
+			}	
+		}
+		for(NodeWorker nw : nodeWorkers){
+			if( nw.gettUid() != null && nw.gettUid() == uid){
+				nw.setInputreq("drop");
+			}
+		}
+		return false;
+	}
 
+	/**End : Methods related to Agv**/
+	
+	
+	/**Methods related with queue and ticket**/
+	
+	public Vector<Ticket> getQueue() {
+		return queue;
+	}
+
+	public boolean removeTicket(int index){
+		int id = queue.get(index).getTid();
+		Long uid = (long)queue.get(index).getUid();
+		new TicketDao().updateStatus(id, "Deleted");
+		queue.remove(index);
+		
+		for(NodeWorker nw : nodeWorkers){
+			if( nw.gettUid() != null && nw.gettUid() == uid){
+				nw.setInputreq("drop");
+			}
+		}
+		return true;
+	}
+	
+	public boolean alterTicket(int index1, int index2) {
+		Ticket temp1 = queue.get(index1);
+		Ticket temp2 = queue.get(index2);
+		queue.set(index1, temp2);
+		queue.set(index2, temp1);
+		return true;
+	}
+	
+	public boolean setTicketToAgv(int index,int Agvno,String status){
+		queue.get(index).setAgvno(Agvno);
+		queue.get(index).setStatus(status);
+		return true;
+	}
+
+	public boolean insertTicket(int Id, long  uid, int pdest, String type, String status) {
+		Ticket t = new Ticket( Id,uid,pdest,type,status);
+		queue.add(t);
+		return true;
+	}
+	
+	/**End : Methods related with queue and ticket**/
+}

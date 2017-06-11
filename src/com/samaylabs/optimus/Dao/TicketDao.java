@@ -3,6 +3,8 @@ package com.samaylabs.optimus.Dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 
@@ -186,6 +188,29 @@ public class TicketDao {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public void backupAndDeleteTickets(){
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		Date date = new Date();
+		SimpleDateFormat formatter = new SimpleDateFormat ("yyyyMMddhhmmss");
+		String query = "create table ticket_"+ formatter.format(date)  +" as(select * from ticket)";
+		try {
+			ps = connection.prepareStatement(query);
+			ps.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		deleteAllTickets();
 	}
 	
 	public void deleteAllTickets(){

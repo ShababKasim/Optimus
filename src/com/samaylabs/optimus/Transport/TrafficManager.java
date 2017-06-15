@@ -42,6 +42,12 @@ public class TrafficManager extends Thread {
 		}
 	}
 
+	public TrafficManager(Map<Long, Integer> signals, List<Agv> agvs, Map<Node, Boolean> parkingStations) {
+		this.signals = signals;
+		this.agvs = agvs;
+		this.parkingStations = parkingStations;
+	}
+
 	public void stoptManager() {
 		this.stop = true;
 	}

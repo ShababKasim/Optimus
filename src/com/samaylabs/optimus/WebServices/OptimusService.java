@@ -36,6 +36,8 @@ public class OptimusService {
 	protected NodeServer nodeServer;
 	protected TrafficManager tManager ;
 	protected Scheduler scheduler;
+	private boolean power;
+	private Gurdian gurdian;
 	
 	
 	public OptimusService(){
@@ -45,10 +47,28 @@ public class OptimusService {
 		this.path = new Path();
 		this.parkingStations = new HashMap<Node,Boolean>();
 		this.nodeWorkers = new ArrayList<NodeWorker>();
+		this.gurdian = new Gurdian(this);
 		
 		for(Node node : path.getParkingNodes()){
 			parkingStations.put(node, true);
 		}
+		gurdian.start();
+	}
+
+	public Gurdian getGurdian() {
+		return gurdian;
+	}
+
+	public void setGurdian(Gurdian gurdian) {
+		this.gurdian = gurdian;
+	}
+
+	public boolean isPower() {
+		return power;
+	}
+
+	public void setPower(boolean power) {
+		this.power = power;
 	}
 
 	/**Methods related to Powering On and Off optimus**/
@@ -99,6 +119,8 @@ public class OptimusService {
 		} catch (Exception e) {
 			log.add("Unable to Start Scheduler");
 		}
+		power = true;
+		gurdian.notify();
 		return log;
 	}
 	
@@ -123,6 +145,8 @@ public class OptimusService {
 		agvs.clear();
 		parkingStations.clear();
 		new TicketDao().backupAndDeleteTickets();
+		power = false;
+		gurdian.wait();
 		return true;
 	}
 	
@@ -178,14 +202,7 @@ public class OptimusService {
 	}
 	
 	public int powerStatusKey(){
-		try {
-			if(!nodeServer.isStopped() && !tManager.isStop() && !scheduler.isStopped())
-				return 1;
-			else
-				return -1;
-		} catch (Exception e) {
-			return -1;
-		}
+		return power ? 1 : -1;
 	}
 	
 	

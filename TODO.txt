@@ -1,0 +1,7 @@
+1. Modify package structure.
+2. Update ticket assigner to agv
+3. Add logs of each data change in agv.
+4. Create program to restart threads if closed by unhandled exception
+5. Isolate agv mover from stateMachine.
+6. keep logs of time wise state change to get productivity chart
+

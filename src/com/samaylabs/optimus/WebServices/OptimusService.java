@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.jws.WebMethod;
 import javax.jws.WebService;
 
 import com.samaylabs.optimus.Communication.StationNode.NodeServer;
@@ -55,10 +56,12 @@ public class OptimusService {
 		gurdian.start();
 	}
 
+	@WebMethod(exclude=true)	
 	public Gurdian getGurdian() {
 		return gurdian;
 	}
 
+	@WebMethod(exclude=true)
 	public void setGurdian(Gurdian gurdian) {
 		this.gurdian = gurdian;
 	}
@@ -67,12 +70,14 @@ public class OptimusService {
 		return power;
 	}
 
+	@WebMethod(exclude=true)
 	public void setPower(boolean power) {
 		this.power = power;
 	}
 
 	/**Methods related to Powering On and Off optimus**/
 	
+	@WebMethod(exclude=true)
 	public void initilizeAll(){
 		List<AgvData> agvList = new AgvDao().retriveAgv();
 		tManager = new TrafficManager(path.getAnchorIds(), agvs, parkingStations);
@@ -83,16 +88,19 @@ public class OptimusService {
 		scheduler = new Scheduler(agvs, queue, ticketCount, path, parkingStations,nodeWorkers);
 	}
 	
+	@WebMethod(exclude=true)
 	public void initilizeTrafficManager(){
 		tManager = new TrafficManager(path.getAnchorIds(), this.agvs, this.parkingStations);
 		tManager.start();
 	}
 	
+	@WebMethod(exclude=true)
 	public void initilizeScheduler(){
 		scheduler = new Scheduler(agvs, queue, ticketCount, path, parkingStations,nodeWorkers);
 		scheduler.start();
 	}
 	
+	@WebMethod(exclude=true)
 	public void initilizeNodeServer(){
 		nodeServer = new NodeServer(9000,queue,ticketCount,nodeWorkers);
 		nodeServer.start();
@@ -120,33 +128,29 @@ public class OptimusService {
 			log.add("Unable to Start Scheduler");
 		}
 		power = true;
-		gurdian.notify();
+		if(gurdian.getState() == Thread.State.WAITING)
+			gurdian.notify();
 		return log;
 	}
 	
 	public boolean stopAndDeinitilize() throws Exception {
 		if(nodeServer.isAlive()){
 			nodeServer.stopServer();
-			nodeServer.join();
 		}
 		if(tManager.isAlive()){
 			tManager.stoptManager();
-			tManager.join();
 		}
 		if(scheduler.isAlive()){
 			scheduler.stopScheduler();
-			scheduler.join();
 		}	
 		for(Agv a : agvs) {
-			a.getStateMachine().resetAgv();
-			a.interrupt();
-			a.getStateMachine().setStop();
+			a.stopAgv();
 		}
 		agvs.clear();
-		parkingStations.clear();
 		new TicketDao().backupAndDeleteTickets();
 		power = false;
-		gurdian.wait();
+		if(gurdian.getState() == Thread.State.RUNNABLE)
+			gurdian.wait();
 		return true;
 	}
 	

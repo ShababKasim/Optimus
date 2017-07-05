@@ -1,8 +1,8 @@
 package com.samaylabs.optimus.Track.models;
 
 /**
- * 
- * @author Shabab
+ * Model to hold Node info from database, use method is prototype
+ * @author Tulve Shabab Kasim
  *
  */
 public class Node {
@@ -32,101 +32,79 @@ public class Node {
 		this.nodeType = nodeType;
 	}
 	
-	/**
-	 * 
-	 * @return
-	 */
-	public float getX_co() {
-		return x_co;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public float getY_co() {
-		return y_co;
-	}
-
-	/**
-	 * 
-	 * @return
-	 */
-	public long getAnchor_id() {
-		return anchor_id;
-	}
 	
-	/**
-	 * 
-	 * @return name of node
-	 */
-	public String getName(){
-		return name;
-	}
 
-	/**
-	 * 
-	 * @return id of node
-	 */
 	public int getId() {
 		return id;
 	}
 
-	/**
-	 * 
-	 * @return anchor id of node
-	 */
-	public long getAId() {
-		return anchor_id;
-	}
 
-	/**
-	 * 
-	 * @return x-co ordinate of node
-	 */
-	public float getX(){
-		return x_co;
-	}
 
-	/**
-	 * 
-	 * @return y-co ordinate of node
-	 */
-	public float getY(){
-		return y_co;
-	}
-	
-	/**
-	 * 
-	 * @return node type 0.>Other node 1.> Business node 2.> Parking node 
-	 */
-	public int getNodeType() {
-		return nodeType;
-	}
-	
 	public void setId(int id) {
 		this.id = id;
 	}
+
+
+
+	public String getName() {
+		return name;
+	}
+
+
 
 	public void setName(String name) {
 		this.name = name;
 	}
 
+
+
+	public float getX_co() {
+		return x_co;
+	}
+
+
+
 	public void setX_co(float x_co) {
 		this.x_co = x_co;
 	}
+
+
+
+	public float getY_co() {
+		return y_co;
+	}
+
+
 
 	public void setY_co(float y_co) {
 		this.y_co = y_co;
 	}
 
+
+
+	public long getAnchor_id() {
+		return anchor_id;
+	}
+
+
+
 	public void setAnchor_id(long anchor_id) {
 		this.anchor_id = anchor_id;
 	}
 
+
+
+	public int getNodeType() {
+		return nodeType;
+	}
+
+
+
 	public void setNodeType(int nodeType) {
 		this.nodeType = nodeType;
 	}
+
+
 
 	public String toString(){
 		return "(" + id +","+ name + ","+x_co+ "," + y_co+ "," + anchor_id + "," + nodeType + ")";

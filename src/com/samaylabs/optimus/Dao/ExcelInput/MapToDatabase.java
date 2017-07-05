@@ -17,8 +17,8 @@ import jxl.Sheet;
 import jxl.Workbook;
 
 /**
- * 
- * @author Shabab
+ * This class reads excel sheets and inserts values to database respectively
+ * @author Tulve Shabab Kasim
  *
  */
 public class MapToDatabase implements DbConstants{
@@ -29,6 +29,10 @@ public class MapToDatabase implements DbConstants{
 	private static Connection connection = db.getConncetion();
 	private static Statement statement = db.getStatement();
 
+
+	/**
+	 * inserts Node form excel sheet specified
+	 */
 	public static void insertNodeFromXl() {				
 		Sheet sh = wb.getSheet("node");
 		int totalNoOfRows = sh.getRows();
@@ -61,6 +65,10 @@ public class MapToDatabase implements DbConstants{
 
 	}
 
+
+	/**
+	 * inserts edge from specified sheet
+	 */
 	public static void insertEdgeFromXl() {				//DONE
 
 		Sheet sh = wb.getSheet("edge");
@@ -93,6 +101,10 @@ public class MapToDatabase implements DbConstants{
 
 	}
 
+
+	/**
+	 * insers noderesolver from specified sheet
+	 */
 	public static void insertNodeResolverFromXl() {				
 		Sheet sh = wb.getSheet("noderesolver");
 		int rows = sh.getRows();
@@ -125,11 +137,14 @@ public class MapToDatabase implements DbConstants{
 
 	}
 
+	/**
+	 * deletes all map based entries from database
+	 */
 	public static void init(){
 		try {
 			statement.execute("delete from edge");
-			//			statement.execute("delete from noderesolver");
-			//			statement.execute("delete from node");
+			statement.execute("delete from noderesolver");
+			statement.execute("delete from node");
 
 		} catch (SQLException e) {
 			e.printStackTrace();

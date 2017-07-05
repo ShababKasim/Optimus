@@ -1,8 +1,8 @@
 package com.samaylabs.optimus.Track.models;
 
 /**
- * 
- * @author Shabab
+ * Model to hold Edge info from database, use method is prototype
+ * @author Tulve Shabab Kasim
  *
  */
 public class Edge{
@@ -32,6 +32,15 @@ public class Edge{
 		this.radius = radius;
 	}
 	
+	/**
+	 * 
+	 * @param eid
+	 * @param source
+	 * @param destination
+	 * @param distance
+	 * @param radius
+	 * @param flag
+	 */
 	public Edge(int eid,Node source, Node destination, double distance,float radius, boolean flag){
 		this.id = eid;
 		this.source = source;
@@ -41,66 +50,41 @@ public class Edge{
 		this.flag = flag;
 	}
 	
-	/**
-	 * 
-	 * @return id of an edge
-	 */
 	public int getId() {
 		return id;
 	}
-	
-	/**
-	 * 
-	 * @return distance from source to destination
-	 */
-	public double getDistance() {
-		return distance;
-	}
-	
-	/**
-	 * 
-	 * @return source object of a edge in form of node
-	 */
-	public Node getSource() {
-		return source;
-	}
-	
-	/**
-	 * 
-	 * @return destination object of a edge in form of node
-	 */
-	public Node getDestination() {
-		return destination;
-	}
-	
-	/**
-	 * 
-	 * @return radius associated to an edge
-	 */
-	public float getRadius(){
-		return radius;
-	}
-
 
 	public void setId(int id) {
 		this.id = id;
 	}
 
+	public Node getSource() {
+		return source;
+	}
 
 	public void setSource(Node source) {
 		this.source = source;
 	}
 
+	public Node getDestination() {
+		return destination;
+	}
 
 	public void setDestination(Node destination) {
 		this.destination = destination;
 	}
 
+	public double getDistance() {
+		return distance;
+	}
 
 	public void setDistance(double distance) {
 		this.distance = distance;
 	}
 
+	public float getRadius() {
+		return radius;
+	}
 
 	public void setRadius(float radius) {
 		this.radius = radius;
@@ -110,11 +94,9 @@ public class Edge{
 		return flag;
 	}
 
-
 	public void setFlag(boolean flag) {
 		this.flag = flag;
 	}
-
 
 	@Override
 	public String toString() {

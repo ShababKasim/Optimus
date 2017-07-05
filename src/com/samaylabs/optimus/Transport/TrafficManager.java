@@ -20,7 +20,7 @@ public class TrafficManager extends Thread {
 
 
 	private volatile Map<Long,Integer> signals = null;
-	private boolean stop;
+	volatile private boolean stop;
 	private List<Agv> agvs;
 	private Map<Node,Boolean> parkingStations;
 	Logger log;

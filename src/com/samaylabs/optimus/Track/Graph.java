@@ -89,7 +89,7 @@ public class Graph implements DbConstants {
 	 */
 	public Node getNodeById(long id,  List<Node> nodes){
 		for(Node v : nodes)
-			if(v.getAId()==id)
+			if(v.getAnchor_id()==id)
 				return  v;
 		return null;
 	}
@@ -202,23 +202,23 @@ public class Graph implements DbConstants {
 	 * @return angle formed by two line meeting on one point
 	 */
 	public double angleBetween2Lines(Edge edge1 , Edge edge2){
-		double x1 = edge1.getSource().getX();
-		double y1 = edge1.getSource().getY();
-		double x2 = edge1.getDestination().getX();
-		double y2 = edge1.getDestination().getY();
-		double x3 = edge2.getDestination().getX();
-		double y3 = edge2.getDestination().getY();
+		double x1 = edge1.getSource().getX_co();
+		double y1 = edge1.getSource().getY_co();
+		double x2 = edge1.getDestination().getX_co();
+		double y2 = edge1.getDestination().getY_co();
+		double x3 = edge2.getDestination().getX_co();
+		double y3 = edge2.getDestination().getY_co();
 		double radian = Math.atan2(y1-y2,x1-x2) - Math.atan2(y2-y3,x2-x3);
 		return (radian > Math.PI) ? (360 - (180*(radian)/Math.PI)) * -1 : (180*(radian)/Math.PI);
 	}
 
 	public double getTypeAngle(Node n1 , Node n2, Node n3){
-		float x1 = n1.getX();
-		float y1 = n1.getY();
-		float x2 = n2.getX();
-		float y2 = n2.getY();
-		float x3 = n3.getX(); 
-		float y3 = n3.getY();
+		float x1 = n1.getX_co();
+		float y1 = n1.getY_co();
+		float x2 = n2.getX_co();
+		float y2 = n2.getY_co();
+		float x3 = n3.getX_co(); 
+		float y3 = n3.getY_co();
 		double radian = Math.atan2(y1-y2,x1-x2) - Math.atan2(y1-y3,x1-x3);
 		return (radian > Math.PI) ? (360 - (180*(radian)/Math.PI)) * -1 : (180*(radian)/Math.PI);
 	}	

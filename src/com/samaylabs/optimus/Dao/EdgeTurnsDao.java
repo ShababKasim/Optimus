@@ -4,14 +4,28 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ *  This calss updates the turning information to be displayed in map of ui
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class EdgeTurnsDao {
 	
-private DbConnection db;
+	private DbConnection db;
 	
+	/**
+	 * 
+	 */
 	public EdgeTurnsDao(){
 		db = new DbConnection();
 	}
 	
+	/**
+	 *  Updates the boolean info in edge table
+	 * @param source node
+	 * @param destination node
+	 * @param flag 
+	 */
 	public void updateFlag(Long source, Long destination, boolean flag){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;

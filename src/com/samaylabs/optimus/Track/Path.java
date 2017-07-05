@@ -117,7 +117,7 @@ public class Path {
 	 */
 	public Node getNodeById(long id){
 		for(Node node : nodes)
-			if(node.getAId()==id)
+			if(node.getAnchor_id()==id)
 				return  node;
 		return null;
 	}
@@ -137,7 +137,7 @@ public class Path {
 	public List<Long> getAnchorIds() {
 		List<Long> list = new ArrayList<Long>();
 		for(Node node : nodes){
-			list.add(node.getAId());
+			list.add(node.getAnchor_id());
 		}
 		return list;
 	} 
@@ -193,7 +193,7 @@ public class Path {
 	 */
 	public int getDistancebetweenNodes(Node source, Node destination, Dijkstra dijkstra) {
 		int count = 0;
-		if(source.getAId() == destination.getAId())
+		if(source.getAnchor_id() == destination.getAnchor_id())
 			return 0;
 		dijkstra.execute(source);
 		LinkedList<Node> pathNode = dijkstra.getPath(destination);
@@ -236,7 +236,7 @@ public class Path {
 	 */
 	public int getResolverIdByNode(Node node){
 		for(NodeResolver n : nodesResolver){
-			if(n.getAid() == node.getAId())
+			if(n.getAid() == node.getAnchor_id())
 				return n.getNRid();
 		}
 		return -1;

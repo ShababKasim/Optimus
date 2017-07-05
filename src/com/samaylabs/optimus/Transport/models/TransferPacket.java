@@ -12,6 +12,10 @@ public class TransferPacket {
 	private int nextType;
 	private boolean nMove;
 	
+	public TransferPacket() {
+		this(0,0,0,false,0,0,0,false);
+	}
+	
 	public TransferPacket(long currentAnchor,int currentAction, int currentType, boolean cMove, long nextAnchor, int nextAction, int nextType,boolean nMove) {
 		this.currentAnchor = currentAnchor;
 		this.currentAction = currentAction;
@@ -71,6 +75,13 @@ public class TransferPacket {
 	}
 	public void setnMove(boolean nMove) {
 		this.nMove = nMove;
+	}
+	
+	public boolean compare(TransferPacket tp){
+		if(this.currentAnchor == tp.currentAnchor && this.currentAction == tp.currentAction && this.currentType == tp.currentType &&
+				this.cMove == tp.cMove && this.nextAnchor == tp.nextAnchor && this.nextAction == tp.nextAction && this.nextType == tp.nextType && this.nMove == tp.nMove)
+			return true;
+		return false;
 	}
 
 	@Override

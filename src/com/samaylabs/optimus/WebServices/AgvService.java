@@ -14,6 +14,7 @@ import javax.jws.WebService;
 import com.samaylabs.optimus.Communication.Plc.AgvMethods;
 import com.samaylabs.optimus.Dao.DbConnection;
 import com.samaylabs.optimus.WebServices.models.AgvData;
+import com.samaylabs.optimus.WebServices.models.AgvUtil;
 import com.samaylabs.optimus.WebServices.models.ListWrapper;
 
 @WebService(name="AgvDeclaration",serviceName="AgvService", portName="AgvPort")
@@ -127,6 +128,55 @@ public class AgvService {
 		}
 		return true;
 	} 
+	
+	@WebMethod
+	public AgvUtil getUtilization(int id){
+		String query = "select * from utilization where id=?";
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		try {
+			ps = connection.prepareStatement(query);
+			ps.setInt(1, id);
+			ResultSet rs = ps.executeQuery();
+			return new AgvUtil(id,rs.getLong("disconnected"),rs.getLong("working"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
+		} catch (SQLException e) {
+			return null;
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	@WebMethod
+	public List<AgvUtil> getAllUtilization(){
+		String query = "select * from utilization";
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		List<AgvUtil> utils = new ArrayList<AgvUtil>();
+		try {
+			ps = connection.prepareStatement(query);
+			ResultSet rs = ps.executeQuery();
+			while(rs.next())
+				utils.add(new AgvUtil(rs.getInt("id"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
+		} catch (SQLException e) {
+			return utils;
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return utils;
+	}
+	
 
 	@WebMethod
 	public ListWrapper pingAgv(String ip, int port){
@@ -147,5 +197,4 @@ public class AgvService {
 		log.add("Success");
 		return log;
 	}
-
 }

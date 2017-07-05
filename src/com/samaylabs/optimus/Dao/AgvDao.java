@@ -9,6 +9,11 @@ import java.util.List;
 
 import com.samaylabs.optimus.WebServices.models.AgvData;
 
+/**
+ * 
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class AgvDao {
 
 	private DbConnection db;
@@ -17,10 +22,19 @@ public class AgvDao {
 		db = new DbConnection();
 	}
 	
+	/**
+	 * Insert agv information
+	 * @param id of agv
+	 * @param name of agv
+	 * @param ipaddr of agv
+	 * @param port of agv
+	 */
 	public void insert(int id, String name, String ipaddr, int port){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
+		PreparedStatement ps1 = null;
 		String insertAgv = "insert into agv values (?,?,?,?,?)";
+		String insertUtil = "insert into utilization values (?,0,0,0,0,0)";
 		try {
 			ps = connection.prepareStatement(insertAgv);
 			ps.setInt(1, id);
@@ -30,6 +44,10 @@ public class AgvDao {
 			ps.setBoolean(5, false);
 			
 			ps.executeUpdate();
+			
+			ps1 = connection.prepareStatement(insertUtil);
+			ps1.setInt(1, id);
+			ps1.executeUpdate();
 			
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -45,6 +63,10 @@ public class AgvDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @return all agv's from database
+	 */
 	public List<AgvData> retriveAgv(){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -71,69 +93,31 @@ public class AgvDao {
 		return agvs;
 	}
 	
-	public void updateIp(int id, String ip){
+	/**
+	 * Updates existing agv values in database
+	 * @param previd of agv to be edited
+	 * @param id new
+	 * @param name new 
+	 * @param ipaddress new 
+	 * @param port new
+	 * @return
+	 */
+	public boolean updateAgv(int previd, int id, String name, String ipaddress, int port){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
-		String UpdateAgv = "update agv set ipaddress=?  where id=?";
-		try {
-			ps = connection.prepareStatement(UpdateAgv);
-			ps.setString(1, ip);
-			ps.setInt(2, id);
-			
-			ps.executeUpdate();
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(ps!=null)
-					ps.close();
-				connection.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public void updatePort(int id, int port){
-		Connection connection = db.getConncetion();
-		PreparedStatement ps = null;
-		String UpdateAgv = "update agv set port=?  where id=?";
-		try {
-			ps = connection.prepareStatement(UpdateAgv);
-			ps.setInt(1, port);
-			ps.setInt(2, id);
-			
-			ps.executeUpdate();
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(ps!=null)
-					ps.close();
-				connection.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	public void updateId(int id, String ipaddr){
-		Connection connection = db.getConncetion();
-		PreparedStatement ps = null;
-		String UpdateAgv = "update agv set id=?  where ipaddress=?";
+		String UpdateAgv = "update agv set id=?,name=?,ipaddress=?,port=?  where id=?";
 		try {
 			ps = connection.prepareStatement(UpdateAgv);
 			ps.setInt(1, id);
-			ps.setString(2, ipaddr);
+			ps.setString(2, name);
+			ps.setString(2, ipaddress);
+			ps.setInt(4, port);
+			ps.setInt(5, previd);
 			
 			ps.executeUpdate();
 			
 		} catch (SQLException e) {
-			e.printStackTrace();
+			return false;
 		} finally {
 			try {
 				if(ps!=null)
@@ -144,33 +128,14 @@ public class AgvDao {
 				e.printStackTrace();
 			}
 		}
+		return true;
 	}
 	
-	public void updateName(int id, String name){
-		Connection connection = db.getConncetion();
-		PreparedStatement ps = null;
-		String UpdateAgv = "update agv set name=?  where id=?";
-		try {
-			ps = connection.prepareStatement(UpdateAgv);
-			ps.setString(1, name);
-			ps.setInt(2, id);
-			
-			ps.executeUpdate();
-			
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			try {
-				if(ps!=null)
-					ps.close();
-				connection.close();
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-
+	/**
+	 * Updates boolean of agv if working sets true else false
+	 * @param id of agv  
+	 * @param status to be set
+	 */
 	public void updateStatus(int id, boolean status){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;

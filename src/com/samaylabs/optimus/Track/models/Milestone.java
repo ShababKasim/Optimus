@@ -1,8 +1,8 @@
 package com.samaylabs.optimus.Track.models;
 
 /**
- * 
- * @author Shabab
+ * Model to hold Milestone info from generated runtime, use method is prototype
+ * @author Tulve Shabab Kasim
  *
  */
 public class Milestone {

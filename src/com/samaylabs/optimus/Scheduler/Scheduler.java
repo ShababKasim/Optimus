@@ -305,22 +305,12 @@ public class Scheduler extends Thread {
 								//								System.out.println("Setted " + nw.getInputreq());
 							}
 						}
-
-						/*for(Ticket ticket : queue){
-							if(ticket.getUid() == nw.gettUid() && ticket.getSdestination() < 1){
-								continue;
-							} else {
-								nw.setInputreq("drop");
-							}
-						}*/
 					}
-
 				}
 			}
 			try {
 				Thread.sleep(800);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

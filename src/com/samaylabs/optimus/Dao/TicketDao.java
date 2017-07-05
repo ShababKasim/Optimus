@@ -3,11 +3,15 @@ package com.samaylabs.optimus.Dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 
+
+/**
+ * This class is used for CURD operation of ticket into database
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class TicketDao {
 
 	private DbConnection db;
@@ -17,6 +21,14 @@ public class TicketDao {
 		db = new DbConnection();
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param Uid
+	 * @param Pdest
+	 * @param type
+	 * @param status
+	 */
 	public void insertTicket(int id, long Uid, int Pdest, String type, String status){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -44,6 +56,10 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param ticket
+	 */
 	public void insertTicket(Ticket ticket){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -71,6 +87,12 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param Agvno
+	 * @param status
+	 */
 	public void updateAgvinfo(int id, int Agvno, String status){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -96,6 +118,11 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param source
+	 */
 	public void updateSource(int id, long source){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -120,6 +147,11 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param Sdest
+	 */
 	public void updateSdest(int id, int Sdest){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -144,6 +176,11 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @param status
+	 */
 	public void updateStatus(int id, String status){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -168,6 +205,10 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 */
 	public void deleteTicket(int id){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
@@ -190,12 +231,13 @@ public class TicketDao {
 		}
 	}
 	
+	/**
+	 * Creates backup of existing ticket table into new table and deletes all intry in ticket table
+	 */
 	public void backupAndDeleteTickets(){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
-		Date date = new Date();
-		SimpleDateFormat formatter = new SimpleDateFormat ("yyyyMMddhhmmss");
-		String query = "create table ticket_"+ formatter.format(date)  +" as(select * from ticket)";
+		String query = "insert into ticket_old(select * from ticket)";
 		try {
 			ps = connection.prepareStatement(query);
 			ps.executeUpdate();
@@ -213,6 +255,9 @@ public class TicketDao {
 		deleteAllTickets();
 	}
 	
+	/**
+	 *  Deletes all tickets in table
+	 */
 	public void deleteAllTickets(){
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;

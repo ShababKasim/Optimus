@@ -2,7 +2,7 @@ package com.samaylabs.optimus.Dao;
 
 /**
  * 
- * @author Shabab
+ * @author Tulve Shabab Kasim
  *
  */
 public interface DbConstants {

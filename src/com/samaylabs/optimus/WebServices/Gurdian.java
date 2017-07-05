@@ -6,6 +6,7 @@ public class Gurdian extends Thread{
 	private boolean stop;
 	
 	public Gurdian(OptimusService optimusService) {
+		super("Gurdian");
 		this.optimusService = optimusService;
 		Thread.currentThread().setName("Gurdian");
 	}

@@ -8,8 +8,8 @@ import jxl.Workbook;
 import jxl.read.biff.BiffException;
 
 /**
- * 
- * @author Shabab
+ * This class creates and returns object to work with excel sheets
+ * @author Tulve Shabab Kasim
  *
  */
 public class ExcelCon {

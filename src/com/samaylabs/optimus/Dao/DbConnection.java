@@ -6,7 +6,7 @@ import java.sql.Statement;
 
 /**
  * 
- * @author Shabab
+ * @author Tulve Shabab Kasim
  *
  */
 public class DbConnection implements DbConstants{
@@ -14,15 +14,9 @@ public class DbConnection implements DbConstants{
 	Connection connection = null;
 	Statement statement = null;
 	
-	private String host = HOST;
-	private String dbName = DBNAME;
-	private String username = USERNAME;
-	private String password = PASSWORD;
-	private String Url = "jdbc:mysql://" + host + "/" + dbName;
+	private String Url = "jdbc:mysql://" + HOST + "/" + DBNAME;
 	
-	public DbConnection(){
-		
-	}
+	public DbConnection(){}
 	
 	
 	/**
@@ -36,7 +30,7 @@ public class DbConnection implements DbConstants{
 		
 		try{
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			connection = DriverManager.getConnection(Url,username,password);
+			connection = DriverManager.getConnection(Url,USERNAME,PASSWORD);
 		}catch(Exception e){
 			e.printStackTrace();
 		}
@@ -50,7 +44,7 @@ public class DbConnection implements DbConstants{
 	public Statement getStatement(){
 		try {
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
-			connection = DriverManager.getConnection(Url,username,password);
+			connection = DriverManager.getConnection(Url,USERNAME,PASSWORD);
 			statement = connection.createStatement();
 		} catch (SQLException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {
 			e.printStackTrace();

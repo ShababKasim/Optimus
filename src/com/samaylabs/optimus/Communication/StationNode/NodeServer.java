@@ -27,23 +27,43 @@ public class NodeServer extends Thread{
     private List<Ticket> queue;
     private AtomicInteger ticketCount;
 
+    /**
+     * @info Constructor without nodeworkers array 
+     * @param port on which server needs to start
+     * @param queue for holding tickets
+     * @param ticketCount atomic ticket count 
+     */
     public NodeServer(int port ,  List<Ticket> queue,AtomicInteger ticketCount){
+    	super("Node Server");
         this.serverPort = port;
         this.queue = queue;
         this.ticketCount = ticketCount;
         nodeWorkers = new ArrayList<NodeWorker>();
     }
     
+    
+    /**
+     * @info Constructor without nodeworkers array
+     * @param port on which server needs to start
+     * @param queue for holding tickets
+     * @param ticketCount atomic ticket count
+     * @param nodeWorkers array for holding connected nodes
+     */
     public NodeServer(int port ,  List<Ticket> queue,AtomicInteger ticketCount, List<NodeWorker> nodeWorkers){
-        this.serverPort = port;
+    	super("Node Server");
+    	this.serverPort = port;
         this.queue = queue;
         this.ticketCount = ticketCount;
         this.nodeWorkers = nodeWorkers;
     }
 
+    
+    /**
+     * Opens a port and waits for connection, once got a connection creates saperate thread to handle request response
+     */
     public void run(){
         openServerSocket();
-        while(! isStopped()){
+        while(!isStopped()){
             Socket clientSocket = null;
             try {
                 clientSocket = this.serverSocket.accept();
@@ -54,16 +74,22 @@ public class NodeServer extends Thread{
                 }
                 throw new RuntimeException("Error accepting client connection", e);
             }
-            NodeWorker nw = new NodeWorker(clientSocket,queue,ticketCount,nodeWorkers);
-            new Thread(nw).start();
+            new Thread(new NodeWorker(clientSocket,queue,ticketCount,nodeWorkers)).start();
         }
         System.out.println("Server Stopped.") ;
     }
 
+    /**
+     * Check if server is stopped
+     * @return true if stopped
+     */
     public synchronized boolean isStopped() {
         return this.isStopped;
     }
 
+    /**
+     * Stops server and closes port, closes all connection established by nodeworkers.
+     */
     public synchronized void stopServer(){
         this.isStopped = true;
         try {
@@ -76,14 +102,26 @@ public class NodeServer extends Thread{
         }
     }
 
+    /**
+     * 
+     * @return array of node worker instances
+     */
     public List<NodeWorker> getNodeWorker() {
 		return nodeWorkers;
 	}
 
+    
+    /**
+     * 
+     * @param nodeWorker 
+     */
 	public void setNodeWorker(List<NodeWorker> nodeWorker) {
 		this.nodeWorkers = nodeWorker;
 	}
 
+	/**
+	 * Opens port for node server
+	 */
 	private void openServerSocket() {
         try {
             this.serverSocket = new ServerSocket(this.serverPort);
@@ -92,10 +130,19 @@ public class NodeServer extends Thread{
         }
     }
 
+	/**
+	 * 
+	 * @return queue of ticket
+	 */
 	public List<Ticket> getQueue() {
 		return queue;
 	}
 
+	
+	/**
+	 * 
+	 * @param queue sets to server instance
+	 */
 	public void setQueue(List<Ticket> queue) {
 		this.queue = queue;
 	}

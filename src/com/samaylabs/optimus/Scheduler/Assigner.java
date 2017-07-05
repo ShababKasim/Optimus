@@ -6,7 +6,7 @@ import com.samaylabs.optimus.Transport.Agv;
 public class Assigner {
 
 	private Agv agv;
-	private boolean stop;
+	volatile private boolean stop;
 	
 	public Assigner(Agv agv) {
 		super();

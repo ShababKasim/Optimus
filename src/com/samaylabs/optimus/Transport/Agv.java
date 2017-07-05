@@ -14,6 +14,7 @@ public class Agv extends Thread {
 	private String name;
 	private String ipaddr;
 	private int port;
+	private boolean stop;
 	private StateMachineAgv stateMachine;
 
 	public Agv(int Id,String name,String ipaddr,int port){
@@ -42,6 +43,16 @@ public class Agv extends Thread {
 	public String getIpaddr() {
 		return ipaddr;
 	}
+	
+	public boolean isStop() {
+		return stop;
+	}
+
+
+	public void setStop(boolean stop) {
+		this.stop = stop;
+	}
+
 
 	public int getPort() {
 		return port;
@@ -57,6 +68,8 @@ public class Agv extends Thread {
 
 	public void stopAgv() {
 		stateMachine.setStop();
+		this.stop = true;
+		this.interrupt();
 	}
 
 	public void setId(int id) {
@@ -83,7 +96,13 @@ public class Agv extends Thread {
 
 	public void run() {
 		new AgvDao().updateStatus(Id, true);
-		stateMachine.execute();
+		while(!isStop()){
+			try{
+				stateMachine.execute();
+			} catch(Exception e){
+				continue;
+			}
+		}
 		new AgvDao().updateStatus(Id, false);
 	}
 

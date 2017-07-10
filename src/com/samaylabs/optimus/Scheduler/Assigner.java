@@ -45,7 +45,6 @@ public class Assigner {
 				return 2;
 			} else if(agv.getStateMachine().isAbort() || agv.getStateMachine().isUiAbort()) {
 				agv.getStateMachine().setUiAbort(false);
-				agv.getStateMachine().setAbort(false);
 				agv.getStateMachine().setJobDone(false);
 				return 1;
 			} else if(agv.getStateMachine().isJobDone()) {

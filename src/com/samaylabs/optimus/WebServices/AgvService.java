@@ -138,7 +138,7 @@ public class AgvService {
 			ps = connection.prepareStatement(query);
 			ps.setInt(1, id);
 			ResultSet rs = ps.executeQuery();
-			return new AgvUtil(id,rs.getLong("disconnected"),rs.getLong("working"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
+			return new AgvUtil(id,rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("working"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
 		} catch (SQLException e) {
 			return null;
 		} finally {
@@ -153,6 +153,36 @@ public class AgvService {
 	}
 	
 	@WebMethod
+	public List<AgvUtil> getUtilizationByIdAndDate(int id,String start, String end){
+		String query = "select * from utilization where dated>= ? and dated<=? and id=?";
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		List<AgvUtil> utils = new ArrayList<AgvUtil>();
+		try {
+			ps = connection.prepareStatement(query);
+			ps.setInt(1, id);
+			ps.setString(2, start);
+			ps.setString(3, end);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+				utils.add(new AgvUtil(rs.getInt("id"),rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
+		} catch (SQLException e) {
+			return utils;
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return utils;
+	}
+	
+	@WebMethod
 	public List<AgvUtil> getAllUtilization(){
 		String query = "select * from utilization";
 		Connection connection = db.getConncetion();
@@ -162,7 +192,7 @@ public class AgvService {
 			ps = connection.prepareStatement(query);
 			ResultSet rs = ps.executeQuery();
 			while(rs.next())
-				utils.add(new AgvUtil(rs.getInt("id"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
+				utils.add(new AgvUtil(rs.getInt("id"),rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
 		} catch (SQLException e) {
 			return utils;
 		} finally {

@@ -78,7 +78,7 @@ public class OptimusService {
 	/**Methods related to Powering On and Off optimus**/
 	
 	@WebMethod(exclude=true)
-	public void initilizeAll(){
+	public void initilizeAll() {
 		List<AgvData> agvList = new AgvDao().retriveAgv();
 		tManager = new TrafficManager(path.getAnchorIds(), agvs, parkingStations);
 		for(AgvData d : agvList){
@@ -107,50 +107,60 @@ public class OptimusService {
 	}
 	
 	public ListWrapper InitilizeAndStart(){
-		initilizeAll();
 		ListWrapper log = new ListWrapper();
-		try {
-			nodeServer.start();
-			log.add("Node Server Started successfully.");
-		} catch (Exception e) {
-			log.add("Unable to Start Node Server");
+		if(power == false){
+			initilizeAll();
+			try {
+				nodeServer.start();
+				log.add("Node Server Started successfully.");
+			} catch (Exception e) {
+				log.add("Unable to Start Node Server");
+			}
+			try {
+				tManager.start();
+				log.add("Traffic Manager Started");
+			} catch (Exception e) {
+				log.add("Unable to Start Traffic Manager");
+			}
+			try {
+				scheduler.start();
+				log.add("Started Scheduler, Check Logs for further Information");
+			} catch (Exception e) {
+				log.add("Unable to Start Scheduler");
+			}
+			power = true;
+			if(gurdian.getState() == Thread.State.WAITING)
+				gurdian.notify();
+		} else {
+			log = powerStatus();
 		}
-		try {
-			tManager.start();
-			log.add("Traffic Manager Started");
-		} catch (Exception e) {
-			log.add("Unable to Start Traffic Manager");
-		}
-		try {
-			scheduler.start();
-			log.add("Started Scheduler, Check Logs for further Information");
-		} catch (Exception e) {
-			log.add("Unable to Start Scheduler");
-		}
-		power = true;
-		if(gurdian.getState() == Thread.State.WAITING)
-			gurdian.notify();
 		return log;
 	}
 	
 	public boolean stopAndDeinitilize() throws Exception {
-		if(nodeServer.isAlive()){
-			nodeServer.stopServer();
+		if(power == true){
+			if(nodeServer.isAlive()){
+				nodeServer.stopServer();
+				
+			}
+			if(tManager.isAlive()){
+				tManager.stoptManager();
+			}
+			if(scheduler.isAlive()){
+				scheduler.stopScheduler();
+			}	
+			for(Agv a : agvs) {
+				a.stopAgv();
+			}
+			nodeWorkers.clear();
+			agvs.clear();
+			queue.clear();
+			ticketCount.set(0);
+			new TicketDao().backupAndDeleteTickets();
+			power = false;
+			if(gurdian.getState() == Thread.State.RUNNABLE)
+				gurdian.wait();
 		}
-		if(tManager.isAlive()){
-			tManager.stoptManager();
-		}
-		if(scheduler.isAlive()){
-			scheduler.stopScheduler();
-		}	
-		for(Agv a : agvs) {
-			a.stopAgv();
-		}
-		agvs.clear();
-		new TicketDao().backupAndDeleteTickets();
-		power = false;
-		if(gurdian.getState() == Thread.State.RUNNABLE)
-			gurdian.wait();
 		return true;
 	}
 	
@@ -217,7 +227,14 @@ public class OptimusService {
 	public List<AgvData> getAgvInfo(){
 		List<AgvData> data = new ArrayList<AgvData>();
 		for(Agv agv : agvs){
-			data.add(new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), agv.getStateMachine().getCurrentTicket(), agv.getStateMachine().getPosition()));
+			/*if(agv.getStateMachine().getCurrentTicket().getStatus() == "Success" || agv.getStateMachine().getCurrentTicket().getStatus() == "Aborted from UI"
+					|| agv.getStateMachine().getCurrentTicket().getStatus() == "Aborted by Scheduler"
+					|| agv.getStateMachine().getCurrentTicket().getStatus() == "Failed"){
+				data.add(new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), null, agv.getStateMachine().getPosition()));
+			} else{*/
+				data.add(new AgvData(agv.getAgvId(), agv.getAgvName(), agv.getIpaddr(), agv.getPort(), agv.getStateMachine().getCurrentTicket(), agv.getStateMachine().getPosition()));
+//			} 
+			
 		}
 		return data;
 	}

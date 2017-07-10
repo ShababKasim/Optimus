@@ -3,22 +3,30 @@ package com.samaylabs.optimus.WebServices.models;
 public class AgvUtil {
 
 	private int id;
+	private String dated;
 	private long disconnected;
 	private long working;
 	private long idle;
 	private long tickets;
 	private long error;
 	
-	public AgvUtil(int id, long disconnected, long working, long idle, long tickets, long error) {
+	public AgvUtil(int id, String dated, long disconnected, long working, long idle, long tickets, long error) {
 		super();
 		this.id = id;
+		this.dated = dated;
 		this.disconnected = disconnected;
 		this.working = working;
 		this.idle = idle;
 		this.tickets = tickets;
 		this.error = error;
 	}
-
+	
+	public String getDated() {
+		return dated;
+	}
+	public void setDated(String dated) {
+		this.dated = dated;
+	}
 	public int getId() {
 		return id;
 	}

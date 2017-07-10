@@ -102,19 +102,17 @@ public class SchedulerService  extends Thread {
 
 		while(!stop) {
 
-			if(agv.getStateMachine().isAvailable())  {
-
+			if(agv.getStateMachine().isAvailable()) {
 
 				if(servingTicket != null) {
 					log.info("Got Ticket " + servingTicket.getTid() + " from scheduler, Assigned to Agv " + agv.getAgvId());
 					int status = doBusiness();
-					if(status == 1){
+					if(status == 1) {
 						log.info("Ticket Aborted.");
-					} else if(status == 0){
+					} else if(status == 0) {
 						log.info("Managed assigned ticket");
 					}
 				}
-
 
 				if(agv.getStateMachine().isLowCharging()) {
 					int status = goCharging();  
@@ -126,16 +124,16 @@ public class SchedulerService  extends Thread {
 						log.info("Managed assigned ticket");
 					}
 
-				} else if(agv.getStateMachine().isShouldPark()) {
+				} 
+				if(agv.getStateMachine().isShouldPark() && provisionTicket == null) {
 					int status = goParking();
 					if(status == -1){
-						log.info("Can't generate charging ticket, No charging station available");
+						log.info("Can't generate charging ticket, No parking station available");
 					} else if(status == 1){
-						log.info("Ticket Aborted");
+						log.info("Ticket Aborted.");
 					} else if(status == 0){
 						log.info("Managed assigned ticket");
 					}
-					agv.getStateMachine().setShouldPark(false);
 				}
 
 			}
@@ -168,21 +166,24 @@ public class SchedulerService  extends Thread {
 
 		// Add a condition to check destination is valid, if its invalid getResolverIdByNode() will return -1 
 		int tcount = ticketCount.incrementAndGet();
-		Ticket ticket = new Ticket(tcount,getUid(),path.getResolverIdByNode(destin),"Parking","Alloted");      // Generate parking ticket
+		provisionTicket = new Ticket(tcount,getUid(),path.getResolverIdByNode(destin),"Parking","Alloted");      // Generate parking ticket
 
-		provisionTicket = ticket;
-		ticket.setType("Parking");
-		ticket.setAgvno(agv.getAgvId());
+		provisionTicket.setType("Parking");
+		provisionTicket.setAgvno(agv.getAgvId());
 
-		new TicketDao().insertTicket(ticket);
-		new TicketDao().updateAgvinfo(ticket.getTid(), agv.getAgvId(), "Parking");
+		new TicketDao().insertTicket(provisionTicket);
+		new TicketDao().updateAgvinfo(provisionTicket.getTid(), agv.getAgvId(), "Parking");
 		log.info("Generating and Assigning parking ticket "+ tcount +" to Agv " + agv.getAgvId());
 
-		int status = assigner.execute(ticket);
+		int status = assigner.execute(provisionTicket);
 
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			return -1;
+		}
 		setProvisionTicket(null);
 		if(status != 0){
-			new TicketDao().updateStatus(ticket.getTid(), "Parking Failed");
 			return status;
 		}
 		return 0;
@@ -191,9 +192,7 @@ public class SchedulerService  extends Thread {
 	private int doBusiness(){
 
 		int status = assigner.execute(servingTicket);
-
 		setServingTicket(null);
-
 		if(status != 0){
 			return status;
 		}
@@ -205,12 +204,12 @@ public class SchedulerService  extends Thread {
 		Node destin = getNearestParkingStation();
 		if(destin == null)
 			return -1;
-		
+
 		int tcount = ticketCount.incrementAndGet();
 		Ticket ticket = new Ticket(tcount,getUid(),path.getResolverIdByNode(destin));      // Generate charging ticket
-	
+
 		provisionTicket = ticket;
-		
+
 		ticket.setType("Charging");
 		ticket.setAgvno(agv.getAgvId());
 		new TicketDao().insertTicket(ticket);

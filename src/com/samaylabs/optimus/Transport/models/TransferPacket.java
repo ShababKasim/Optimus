@@ -84,6 +84,17 @@ public class TransferPacket {
 		return false;
 	}
 
+	public void update(TransferPacket tp){
+		this.currentAnchor = tp.getCurrentAnchor();
+		this.currentAction = tp.getCurrentAction();
+		this.currentType = tp.getCurrentType();
+		this.cMove = tp.getcMove();
+		this.nextAnchor = tp.getNextAnchor();
+		this.nextAction = tp.getNextAction();
+		this.nextType = tp.getNextType();
+		this.nMove = tp.getnMove();
+	}
+	
 	@Override
 	public String toString() {
 		return "[CAnchor=" + currentAnchor + ", CAction=" + currentAction + ", CType="

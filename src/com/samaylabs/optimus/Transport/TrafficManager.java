@@ -111,15 +111,6 @@ public class TrafficManager extends Thread {
 				else
 					return signals.get(l);
 			}
-			/*for(Long l : signals.keySet()){
-				if(anchors.contains(l))
-					if(signals.get(l) == -1 || signals.get(l) == agvId)
-						signals.replace(l, agvId);
-					else{
-						return signals.get(l);
-					
-					}
-			}*/
 		} else{
 			releaseMine(agvId);
 		}
@@ -152,7 +143,7 @@ public class TrafficManager extends Thread {
 	}
 
 	@Override
-	public void run(){
+	public void run() {
 		log = new DbLogger().getLogger("Traffic Manager");
 		log.info("Traffic Manager Started");
 		while(!stop){

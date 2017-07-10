@@ -126,28 +126,6 @@ public class Scheduler extends Thread {
 		}	
 	}
 
-	/*public void executeRoundRobin() {
-
-		int robinNo = agvs.size();
-		//		startSchedulerServices();
-		while(!stop) {
-			robinNo = (robinNo %  agvs.size());
-			try{
-				Ticket servingTicket = queue.get(0);
-				schedulerServices.get(robinNo++ % schedulerServices.size()).setServingTicket(servingTicket);
-				queue.remove(0);
-			} catch (ArrayIndexOutOfBoundsException e) {
-				System.out.println("No tickets in queue :(");
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				}
-			}
-		}
-		//		stopSchedulerServices();
-	}*/
-
 	private List<Agv> getAvailableAgvs(){
 		List<Agv> temp = new ArrayList<Agv>();
 		for(Agv agv : agvs){
@@ -213,7 +191,7 @@ public class Scheduler extends Thread {
 	private void ticketPoller() { 
 		List<Agv> availableAgvs = getAvailableAgvs();
 		if(availableAgvs.size() > 0) {
-			outer : for(Agv agv : availableAgvs){
+			outer : for(Agv agv : availableAgvs) {
 				for(Ticket ticket : queue){
 					if(ticket.getStatus().equals("Queued") && ticket.getAgvno() == agv.getAgvId()){
 						continue outer;
@@ -262,8 +240,9 @@ public class Scheduler extends Thread {
 							ticketPoller();
 
 							if( ss.getProvisionTicket() != null ){
-								if(ss.getProvisionTicket().getType().equals("Parking"))
+								if(ss.getProvisionTicket().getType().equals("Parking")) {
 									ss.abortTicket();
+								}
 							}
 
 							Ticket toServeTicket = getFirstTicket(ss.getAgv().getAgvId());
@@ -279,6 +258,8 @@ public class Scheduler extends Thread {
 									lc1 = 1;
 								}
 							}
+						} else {
+							ss.getAgv().getStateMachine().setShouldPark(false);
 						}
 					}
 				}
@@ -294,15 +275,14 @@ public class Scheduler extends Thread {
 			for(SchedulerService ss : schedulerServices) {
 				if(ss.getServingTicket() != null){
 					long Uid = ss.getServingTicket().getUid();
-
-
-					for(NodeWorker nw : nodeWorkers){
-						if( nw.gettUid() != null && nw.gettUid() == Uid){
-							if(!ss.getServingTicket().getStatus().equals("Serving")) 
-								nw.setInputreq("drop");
-							else{
+					for(NodeWorker nw : nodeWorkers) {
+						if( nw.gettUid() == Uid) {
+							if(ss.getServingTicket().getStatus().equals("Alloted") || ss.getServingTicket().getStatus().equals("Queued")){
+								nw.setInputreq("booked");
+							} else if(ss.getServingTicket().getStatus().equals("Picking Up")){
 								nw.setInputreq("serving");
-								//								System.out.println("Setted " + nw.getInputreq());
+							} else{
+								nw.setInputreq("drop");
 							}
 						}
 					}
@@ -311,7 +291,8 @@ public class Scheduler extends Thread {
 			try {
 				Thread.sleep(800);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				if(stop)
+					this.interrupt();
 			}
 		}
 		stopSchedulerServices();	

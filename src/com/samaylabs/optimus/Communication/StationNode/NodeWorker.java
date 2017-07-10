@@ -28,7 +28,7 @@ public class NodeWorker implements Runnable{
 
 	private List<NodeWorker> nodeWorkers;
 	private final List<Ticket> queue;
-	private boolean stop;
+	volatile private boolean stop;
 	volatile private String inputreq;
 	volatile private Long tUid = 0L;
 
@@ -38,7 +38,7 @@ public class NodeWorker implements Runnable{
 	protected Date date;
 	protected SimpleDateFormat formatter;
 
-	
+
 	/**
 	 * 
 	 * @param clientSocket Socket object returned by node server
@@ -66,7 +66,7 @@ public class NodeWorker implements Runnable{
 	public void stopWorker(){
 		stop = true;
 	}
-	
+
 	/**
 	 * 
 	 * @return State variable of node worker
@@ -110,35 +110,34 @@ public class NodeWorker implements Runnable{
 				nodeId = input.readLine();
 				Thread.currentThread().setName("Node-> " +nodeId);
 				nodeWorkers.add(this);
-//				System.out.println("Connected to Client" + nodeId);
-				
+				//				System.out.println("Connected to Client" + nodeId);
+
 				clientSocket.setSoTimeout(5000);
-	
+
 				inputreq = "alive";
-				
+
 				while(!stop) {
 
 					date = new Date();
 					formatter = new SimpleDateFormat ("yyyyMMddhhmmss");
-					
+
 					switch(inputreq) {
 
 					case "alive":
-//     						System.out.println("Alive");
+						//     						System.out.println("Alive");
 						output.writeBytes("alive}");
 						inputreq = input.readLine();
-//						System.out.println("sent.>alive; rec..>" + inputreq);
+						//						System.out.println("sent.>alive; rec..>" + inputreq);
 						break;
-					
+
 					case "booked":
-//						System.out.println("booked");
+						//						System.out.println("booked");
 						output.writeBytes("booked}");
-						inputreq = input.readLine();
-//						System.out.println("sent.>alive; rec..>" + inputreq);
+						//						System.out.println("sent.>alive; rec..>" + inputreq);
 						break;	
-						
+
 					case "create":
-//						System.out.println("in CT..>" + inputreq);
+						//						System.out.println("in CT..>" + inputreq);
 						tUid = Long.parseLong(formatter.format(date) + nodeId);
 						try{
 							Ticket ticket = new Ticket(ticketCount.incrementAndGet(),tUid,Integer.parseInt(nodeId),"Pickup","Unalloted"); 
@@ -147,40 +146,38 @@ public class NodeWorker implements Runnable{
 							output.flush();
 							output.writeBytes("success}");
 							inputreq = "booked";
-//							System.out.println("Got a Ticket");
+							//							System.out.println("Got a Ticket");
 						} catch (ConcurrentModificationException e) {
 							output.writeBytes("fail}");
 							inputreq = "alive";
-//							System.out.println("Exeption getting a Ticket");
+							//							System.out.println("Exeption getting a Ticket");
 						}
-						
 						break;
-					
+
 					case "serving":
-//						System.out.println("Serving");
+						//						System.out.println("Serving");
 						output.writeBytes("serving}");
-						inputreq = input.readLine();
-//						System.out.println("sent.>serving; rec..>" + inputreq);
+						//						System.out.println("sent.>serving; rec..>" + inputreq);
 						break;
-						
+
 					case "drop":
-//						System.out.println("drop");
+						//						System.out.println("drop");
 						output.writeBytes("drop}");	
 						inputreq = "alive";
-//						System.out.println("sent.>drop; rec..>" + inputreq);
+						//						System.out.println("sent.>drop; rec..>" + inputreq);
 						break;	
-					
+
 					default:
-//						System.out.println("Default");
-					
-	}
+						//						System.out.println("Default");
+
+					}
+					Thread.sleep(400);
 				}
 			}
-			Thread.sleep(400);
 		} catch (IOException | InterruptedException | NullPointerException e) {
 			nodeWorkers.remove(this);
 		} finally {
-//			System.out.println("disconnected" );
+			//			System.out.println("disconnected" );
 			try {
 				output.close();
 				input.close();

@@ -70,6 +70,7 @@ public class NodeServer extends Thread{
             } catch (IOException e) {
                 if(isStopped()) {
                     System.out.println("Server Stopped.");
+                    this.interrupt();
                     return;
                 }
                 throw new RuntimeException("Error accepting client connection", e);
@@ -100,6 +101,7 @@ public class NodeServer extends Thread{
         for(NodeWorker n : nodeWorkers ){
         	n.stopWorker();
         }
+        this.interrupt();
     }
 
     /**

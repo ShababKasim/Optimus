@@ -1,8 +1,10 @@
 package com.samaylabs.optimus.Transport;
 
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -63,6 +65,8 @@ public class StateMachineAgv {
 	protected Logger log;
 	protected AgvUtilDao utilLog;
 	protected TicketDao ticketDao;
+	protected String prevLogDate;
+	SimpleDateFormat ft;
 	TransferPacket ptp = new TransferPacket();
 	TransferPacket ctp = new TransferPacket();
 
@@ -84,6 +88,9 @@ public class StateMachineAgv {
 		reserveList =  new ArrayList<Long>(Arrays.asList(l));
 		utilLog = new AgvUtilDao();
 		ticketDao = new TicketDao();
+		ft = new SimpleDateFormat ("yyyy-MM-dd");
+		prevLogDate = ft.format(new Date());
+		
 	}
 
 	public States getState() {
@@ -384,7 +391,7 @@ public class StateMachineAgv {
 				} catch (Exception e) {
 					state = States.Connection;
 					System.out.print(".");
-					if(state != States.Connection || isStopped()){
+					if(state != States.Connection || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 						utilLog.updateUtilizationLog(Id, "disconnected", (System.currentTimeMillis()-startTime)/1000);
 						startTime = System.currentTimeMillis();
 					}
@@ -396,7 +403,7 @@ public class StateMachineAgv {
 					}*/
 				}
 				error = false;
-				if(state != States.Connection || isStopped()){
+				if(state != States.Connection || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "disconnected", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}
@@ -425,12 +432,13 @@ public class StateMachineAgv {
 					abort = false;
 					uiAbort = false;
 					jobDone = false;
+                                        jump = false;
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-					if(state != States.Idle || isStopped()) {
+					if(state != States.Idle || isStopped() || !prevLogDate.equals(ft.format(new Date()))) {
 						utilLog.updateUtilizationLog(Id, "idle", (System.currentTimeMillis()-startTime)/1000);
 						startTime = System.currentTimeMillis();
 					}
@@ -454,7 +462,7 @@ public class StateMachineAgv {
 				} else{
 					utilLog.updateUtilizationLog(Id, "tickets",1 );
 				}
-				if(state != States.Idle || isStopped()) {
+				if(state != States.Idle || isStopped() || !prevLogDate.equals(ft.format(new Date()))) {
 					utilLog.updateUtilizationLog(Id, "idle", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}
@@ -478,7 +486,7 @@ public class StateMachineAgv {
 				} else if(uiAbort){
 					log.info("Pickup : Ticket Aborted from UI");
 				}
-				if(state != States.Pickup || isStopped()){
+				if(state != States.Pickup || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "moving", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}
@@ -500,7 +508,7 @@ public class StateMachineAgv {
 							ticketDao.updateStatus(currentTicket.getTid(), "Aborted from UI");
 							currentTicket.setStatus("Aborted from UI");
 							log.info("Ticket aborted from UI");
-							if(state != States.Drop || isStopped()){
+							if(state != States.Drop || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 								utilLog.updateUtilizationLog(Id, "idle", (System.currentTimeMillis()-startTime)/1000);
 								startTime = System.currentTimeMillis();
 							}
@@ -517,7 +525,7 @@ public class StateMachineAgv {
 					prevState = state;
 					state = States.Connection;
 					log.error("Drop : Modbus exception while getting hooking info");
-					if(state != States.Drop || isStopped()){
+					if(state != States.Drop || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 						utilLog.updateUtilizationLog(Id, "idle", (System.currentTimeMillis()-startTime)/1000);
 						startTime = System.currentTimeMillis();
 					}
@@ -560,7 +568,7 @@ public class StateMachineAgv {
 
 				agvMover();
 				if(!pathComplete){
-					if(state != States.Drop || isStopped()){
+					if(state != States.Drop || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 						utilLog.updateUtilizationLog(Id, "working", (System.currentTimeMillis()-startTime)/1000);
 						startTime = System.currentTimeMillis();
 					}
@@ -568,7 +576,7 @@ public class StateMachineAgv {
 				} else if(uiAbort){
 					log.info("Drop : Ticket Aborted from UI");
 					jump = false;
-					if(state != States.Drop || isStopped()){
+					if(state != States.Drop || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 						utilLog.updateUtilizationLog(Id, "working", (System.currentTimeMillis()-startTime)/1000);
 						startTime = System.currentTimeMillis();
 					}
@@ -617,7 +625,7 @@ public class StateMachineAgv {
 					log.info("Pickup : Destination reached");
 					state = States.Idle;
 				}
-				if(state != States.Drop || isStopped()){
+				if(state != States.Drop || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "working", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}
@@ -659,7 +667,7 @@ public class StateMachineAgv {
 					currentTicket.setStatus("Dropped, Parking missed");
 					ticketDao.updateStatus(currentTicket.getTid(), "Dropped, Parking missed");
 				}
-				if(state != States.TravelToPark || isStopped()){
+				if(state != States.TravelToPark || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "moving", ((System.currentTimeMillis()-startTime)/1000));
 					startTime = System.currentTimeMillis();
 				}
@@ -688,7 +696,7 @@ public class StateMachineAgv {
 				} else if(abort){
 					abort = false;
 				}
-				if(state != States.TravelToCharge || isStopped()){
+				if(state != States.TravelToCharge || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "moving",((System.currentTimeMillis()-startTime)/1000));
 					startTime = System.currentTimeMillis();
 				}
@@ -745,7 +753,7 @@ public class StateMachineAgv {
 					state = States.Connection;
 					log.error("Idle : Modbus exception  while transfering destination info to HMI");
 				}
-				if(state != States.Pause || isStopped()){
+				if(state != States.Pause || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "error", ((System.currentTimeMillis()-startTime)/1000));
 					startTime = System.currentTimeMillis();
 				}
@@ -783,7 +791,7 @@ public class StateMachineAgv {
 					state = States.Connection;
 					log.error("Idle : Modbus exception  while transfering destination info to HMI");
 				}
-				if(state != States.Notification || isStopped()){
+				if(state != States.Notification || isStopped() || !prevLogDate.equals(ft.format(new Date()))){
 					utilLog.updateUtilizationLog(Id, "error", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}

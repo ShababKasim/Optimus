@@ -10,6 +10,16 @@ public class AgvUtil {
 	private long tickets;
 	private long error;
 	
+	public AgvUtil(int id, long disconnected, long working, long idle, long tickets, long error) {
+		super();
+		this.id = id;
+		this.disconnected = disconnected;
+		this.working = working;
+		this.idle = idle;
+		this.tickets = tickets;
+		this.error = error;
+	}
+	
 	public AgvUtil(int id, String dated, long disconnected, long working, long idle, long tickets, long error) {
 		super();
 		this.id = id;
@@ -62,6 +72,12 @@ public class AgvUtil {
 	}
 	public void setError(long error) {
 		this.error = error;
+	}
+
+	@Override
+	public String toString() {
+		return "AgvUtil [id=" + id + ", disconnected=" + disconnected + ", working=" + working
+				+ ", idle=" + idle + ", tickets=" + tickets + ", error=" + error + "]";
 	}
 	
 	

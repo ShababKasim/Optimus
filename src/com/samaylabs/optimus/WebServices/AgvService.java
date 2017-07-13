@@ -5,7 +5,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.jws.WebMethod;
@@ -130,15 +132,47 @@ public class AgvService {
 	} 
 	
 	@WebMethod
-	public AgvUtil getUtilization(int id){
+	public List<AgvUtil> getUtilization(int id){
 		String query = "select * from utilization where id=?";
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
+		List<AgvUtil> utils = new ArrayList<AgvUtil>();
 		try {
 			ps = connection.prepareStatement(query);
 			ps.setInt(1, id);
 			ResultSet rs = ps.executeQuery();
-			return new AgvUtil(id,rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("working"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
+			while(rs.next())
+				utils.add(new AgvUtil(rs.getInt("id"),rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
+			
+		} catch (SQLException e) {
+			return utils;
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return utils;
+	}
+	
+	@WebMethod
+	public AgvUtil getTodayUtil(int id){
+		Date dNow = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd");
+		String query = "select * from utilization where dated=? and id=?";
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		try {
+			ps = connection.prepareStatement(query);
+			ps.setInt(2, id);
+			ps.setString(1, ft.format(dNow));
+			ResultSet rs = ps.executeQuery();
+			while(rs.next())
+				return new AgvUtil(rs.getInt("id"),rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
+			
 		} catch (SQLException e) {
 			return null;
 		} finally {
@@ -150,22 +184,22 @@ public class AgvService {
 				e.printStackTrace();
 			}
 		}
+		return null;
 	}
-	
+
 	@WebMethod
-	public List<AgvUtil> getUtilizationByIdAndDate(int id,String start, String end){
-		String query = "select * from utilization where dated>= ? and dated<=? and id=?";
+	public List<AgvUtil> getTodayAllUtilization(){
+		String query = "select * from utilization where dated=?";
+		Date dNow = new Date();
+		SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd");
 		Connection connection = db.getConncetion();
 		PreparedStatement ps = null;
 		List<AgvUtil> utils = new ArrayList<AgvUtil>();
 		try {
 			ps = connection.prepareStatement(query);
-			ps.setInt(1, id);
-			ps.setString(2, start);
-			ps.setString(3, end);
+			ps.setString(1, ft.format(dNow));
 			
 			ResultSet rs = ps.executeQuery();
-			
 			while(rs.next())
 				utils.add(new AgvUtil(rs.getInt("id"),rs.getString("dated"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error")));
 		} catch (SQLException e) {
@@ -180,6 +214,38 @@ public class AgvService {
 			}
 		}
 		return utils;
+	}
+	
+	@WebMethod
+	public AgvUtil getUtilizationByIdAndDate(int id,String start, String end){
+		String query = "select id,sum(disconnected) as disconnected,sum(moving) as moving,sum(idle) as idle,sum(tickets) as tickets, sum(error) as error from utilization where dated>=? and dated<=? and id=?";
+		Connection connection = db.getConncetion();
+		PreparedStatement ps = null;
+		
+		try {
+			ps = connection.prepareStatement(query);
+			ps.setString(1, start);
+			ps.setString(2, end);
+			ps.setInt(3, id);
+			
+			ResultSet rs = ps.executeQuery();
+			
+			while(rs.next())
+				return new AgvUtil(rs.getInt("id"),rs.getLong("disconnected"),rs.getLong("moving"),rs.getLong("idle"),rs.getLong("tickets"),rs.getLong("error"));
+			
+				
+		} catch (SQLException e) {
+			return null;
+		} finally {
+			try {
+				if(ps!=null)
+					ps.close();
+				connection.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 	
 	@WebMethod
@@ -227,4 +293,5 @@ public class AgvService {
 		log.add("Success");
 		return log;
 	}
+	
 }

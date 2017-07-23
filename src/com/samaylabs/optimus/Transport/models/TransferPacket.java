@@ -1,5 +1,11 @@
 package com.samaylabs.optimus.Transport.models;
 
+
+/**
+ * This is POJO class which holds data which is transfered to Agv while its moving
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class TransferPacket {
 
 	private long currentAnchor;

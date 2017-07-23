@@ -3,6 +3,12 @@ package com.samaylabs.optimus.WebServices.models;
 import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 import com.samaylabs.optimus.Track.models.Node;
 
+
+/**
+ * This Class is POJO to display Agv and StateMachine related data over WebService
+ * @author exponent
+ *
+ */
 public class AgvData {
 
 	private int id;

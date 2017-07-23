@@ -3,6 +3,12 @@ package com.samaylabs.optimus.Scheduler;
 import com.samaylabs.optimus.Communication.StationNode.models.Ticket;
 import com.samaylabs.optimus.Transport.Agv;
 
+
+/**
+ * This class is used to manage the status of ticket once assigned to an Agv.
+ * @author exponent
+ *
+ */
 public class Assigner {
 
 	private Agv agv;
@@ -29,6 +35,12 @@ public class Assigner {
 		this.stop = stop;
 	}
 
+	
+	/**
+	 * This method takes input Ticket and assigns it to Agv and sets it work variable true and if one it the conditions ot break the loop occurs in agv it returns.
+	 * @param ticket Ticket object
+	 * @return 1,2,3 if there is any problem serving the ticket. 0 if success 
+	 */
 	public int execute(Ticket ticket){
 
 		agv.getStateMachine().setCurrentTicket(ticket);

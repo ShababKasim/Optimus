@@ -17,7 +17,7 @@ public interface DbConstants {
 	final String selectedge = "select * from edge";
 	
 	final String insertnode = "insert into node values(?,?,?,?,?,?)";
-	final String insertedge = "insert into edge values(?,(select anchor from node where node.n_name = ?),(select anchor from node where node.n_name = ?),?,?,?)";
+	final String insertedge = "insert into edge values(null,(select anchor from node where node.n_name = ?),(select anchor from node where node.n_name = ?),?,?,?)";
 	final String insertnoderesolver = "insert into noderesolver values(?,?,?)";
 	
 	final String deletenode = "delete from node where anchor=?";

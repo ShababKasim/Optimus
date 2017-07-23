@@ -12,8 +12,8 @@ import com.samaylabs.optimus.Track.models.NodeResolver;
 
 
 /**
- * 
- * @author Shabab
+ * This class consists of path calculation and some helping methods related to defined map  
+ * @author Tulve Shabab kasim
  *
  */
 public class Path {
@@ -27,7 +27,7 @@ public class Path {
 	
 
 	/**
-	 *  This constructor fetches the map info from database and calculates turns and types of map.
+	 *  This constructor fetches the map info from database, and initilizes objects needed.
 	 */
 	public Path(){
 		try {
@@ -55,11 +55,20 @@ public class Path {
 	public List<Edge> getEdges(){
 		return edges;
 	}
-
+	
+	/**
+	 * 
+	 * @return
+	 */
 	public List<Milestone> getMilestones(){
 		return milestones;
 	}
 	
+	/**
+	 * 
+	 * @param NRid
+	 * @return
+	 */
 	public Node getNodeFromResolverById(int NRid) {
 		for(NodeResolver n : nodesResolver)
 			if(n.getNRid() == NRid) 
@@ -67,6 +76,11 @@ public class Path {
 		return null;
 	}
 	
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public Node getNodeFromResolverByAnchor(long id) {
 		for(NodeResolver n : nodesResolver)
 			if(n.getNRid() == id) 
@@ -242,7 +256,10 @@ public class Path {
 		return -1;
 	}
 	
-	
+	/**
+	 * This method return list of Node object which is defined as Working Station spots.
+	 * @return List of Node Object
+	 */
 	public List<Node> getBusinessNodes(){
 		List<Node> tmp = new ArrayList<Node>();
 		for(Node n : nodes){
@@ -252,6 +269,10 @@ public class Path {
 		return tmp;
 	}
 
+	/**
+	 * This method return list of Node object which is defined as Parking spots.
+	 * @return List of Node Object
+	 */
 	public List<Node> getParkingNodes(){
 		List<Node> tmp = new ArrayList<Node>();
 		for(Node n : nodes){
@@ -261,6 +282,10 @@ public class Path {
 		return tmp;
 	}
 	
+	/**
+	 * This method return list of Node object which is defined as Charging spots.
+	 * @return List of Node Object
+	 */
 	public List<Node> getChargingNodes(){
 		List<Node> tmp = new ArrayList<Node>();
 		for(Node n : nodes){

@@ -13,7 +13,7 @@ import com.samaylabs.optimus.Track.models.Edge;
 import com.samaylabs.optimus.Track.models.Node;
 
 /**
- * 
+ * This class is implememtation of Dijkstra Shortest path algorithm
  * @author Tulve Shabab Kasim
  *
  */

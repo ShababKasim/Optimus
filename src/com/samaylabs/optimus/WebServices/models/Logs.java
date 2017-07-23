@@ -1,5 +1,11 @@
 package com.samaylabs.optimus.WebServices.models;
 
+
+/**
+ * This is POJO class for Logs to Store and send data over Web Service
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class Logs {
 
 	private String userid;
@@ -7,6 +13,13 @@ public class Logs {
 	private String level;
 	private String message;
 	
+	/**
+	 * 
+	 * @param userid Loggers user id
+	 * @param date datetime stored along with logger
+	 * @param level Debug, Info, Warning, Error
+	 * @param message
+	 */
 	public Logs(String userid, String date, String level, String message) {
 		super();
 		this.userid = userid;

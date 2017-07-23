@@ -2,7 +2,6 @@ package com.samaylabs.optimus.WebServices;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +16,12 @@ import com.samaylabs.optimus.Track.models.Edge;
 import com.samaylabs.optimus.Track.models.Node;
 import com.samaylabs.optimus.Track.models.NodeResolver;
 
+
+/**
+ * Methods in this Class is Called by clients which are related to Agv Track defination ad Manipulation  
+ * @author Tulve Shabab Kasim
+ *
+ */
 @WebService(name="TrackDefination",serviceName="TrackDefinationService", portName="TrackPort")
 public class TrackService implements DbConstants{
 	
@@ -46,17 +51,10 @@ public class TrackService implements DbConstants{
 	public boolean createNode(long anchor,float xco, float yco, int type){
 		Connection connection = new DbConnection().getConncetion();
 		PreparedStatement ps = null;
-		PreparedStatement ps1 = null;
-		int n_id = 0;
 		try {
 			ps = connection.prepareStatement(insertnode);
-			ps1 = connection.prepareStatement("select count(*) as count from node");
-			ResultSet rs = ps1.executeQuery();
-			while(rs.next())
-				n_id = Integer.parseInt(rs.getString("count"));
-			n_id++;
-			ps.setInt(1, n_id);
-			ps.setString(2, "" + n_id);
+			ps.setInt(1, (int)anchor);
+			ps.setString(2, "" + anchor);
 			ps.setFloat(3, xco);
 			ps.setFloat(4, yco);
 			ps.setLong(5, anchor);
@@ -68,8 +66,6 @@ public class TrackService implements DbConstants{
 			try {
 				if(ps!=null)
 					ps.close();
-				if(ps1!=null)
-					ps1.close();
 				connection.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -174,10 +170,11 @@ public class TrackService implements DbConstants{
 		PreparedStatement ps = null;
 		try {
 			ps = connection.prepareStatement(updatenoderesolver);
-			ps.setInt(1, pnrid);
-			ps.setInt(2, nrid);
-			ps.setLong(3, anchor);
-			ps.setString(4, Label);
+			ps.setInt(1, nrid);
+			ps.setLong(2, anchor);
+			ps.setString(3, Label);
+			ps.setInt(4, pnrid);
+			
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			return false;
@@ -219,30 +216,24 @@ public class TrackService implements DbConstants{
 	public boolean createEdge(long src, long dest, double dist, float radius){
 		Connection connection = new DbConnection().getConncetion();
 		PreparedStatement ps = null;
-		PreparedStatement ps1 = null;
-		int e_id = 0;
+		
 		try {
 			ps = connection.prepareStatement(insertedge);
-			ps1 = connection.prepareStatement("select count(*) as count from edge");
-			ResultSet rs = ps1.executeQuery();
-			while(rs.next())
-				e_id = Integer.parseInt(rs.getString("count"));
-			ps.setInt(1, ++e_id);
-			ps.setLong(2, src);
-			ps.setLong(3, dest);
-			ps.setDouble(4, dist);
-			ps.setFloat(5, radius);
-			ps.setBoolean(6, false);
+			
+			ps.setLong(1, src);
+			ps.setLong(2, dest);
+			ps.setDouble(3, dist);
+			ps.setFloat(4, radius);
+			ps.setBoolean(5, false);
 			ps.executeUpdate();
 		} catch (SQLException e) {
+			System.out.println("Exception");
 			e.printStackTrace();
 			return false;
 		} finally {
 			try {
 				if(ps!=null)
 					ps.close();
-				if(ps1!=null)
-					ps1.close();
 				connection.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
@@ -285,13 +276,14 @@ public class TrackService implements DbConstants{
 		Connection connection = new DbConnection().getConncetion();
 		PreparedStatement ps = null;
 		try {
-			ps = connection.prepareStatement(deletenode);
+			ps = connection.prepareStatement(updateedge);
 			ps.setLong(1, src);
 			ps.setLong(2, dest);
 			ps.setDouble(3, dist);
 			ps.setFloat(4, radius);
-			ps.setLong(5, src);
-			ps.setLong(6, dest);
+			ps.setLong(5, prevsrc);
+			ps.setLong(6, prevdest);
+			
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			return false;
@@ -328,4 +320,9 @@ public class TrackService implements DbConstants{
 		return anchors;
 	}
 
+	public static void main(String[] args) {
+		TrackService s = new TrackService();
+		s.updateEdge(3, 4, 3, 4, 21, 2100);
+	}
+		
 }

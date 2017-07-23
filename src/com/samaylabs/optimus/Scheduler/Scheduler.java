@@ -21,6 +21,12 @@ import com.samaylabs.optimus.Track.Path;
 import com.samaylabs.optimus.Track.models.Node;
 import com.samaylabs.optimus.Transport.Agv;
 
+
+/**
+ * This class implements Scheduling of tickets form sources to agvs. 
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class Scheduler extends Thread {
 
 
@@ -99,6 +105,10 @@ public class Scheduler extends Thread {
 		this.stop = true;
 	}
 
+	/**
+	 * This method is used to add new agv while the program is running.
+	 * @param agv Agv Object
+	 */
 	public void addNewAgv(Agv agv){
 		agvs.add(agv);
 		SchedulerService ss = new SchedulerService(agv, ticketCount, parkingStations, path);
@@ -106,6 +116,9 @@ public class Scheduler extends Thread {
 		ss.start();
 	}
 
+	/**
+	 * This method is called when scheduler is started, It creates Scheduler Service objects for each Agv in List.
+	 */
 	private void initSchedulerServices(){
 
 		schedulerServices = new ArrayList<SchedulerService>();
@@ -115,17 +128,27 @@ public class Scheduler extends Thread {
 		}
 	}
 
+	/**
+	 * This method starts all the schduler service objects
+	 */
 	public void startSchedulerServices() {
 		for(SchedulerService s: schedulerServices)
 			s.start();
 	}
 
+	/**
+	 * This method stops all the schduler service objects
+	 */
 	public void stopSchedulerServices() {
 		for(SchedulerService s: schedulerServices){
 			s.stopSchedulerService();
 		}	
 	}
 
+	/**
+	 * This method returns all the Agv of whcih available variable is true
+	 * @return List of Agv
+	 */
 	private List<Agv> getAvailableAgvs(){
 		List<Agv> temp = new ArrayList<Agv>();
 		for(Agv agv : agvs){
@@ -135,6 +158,13 @@ public class Scheduler extends Thread {
 		return temp;
 	}
 
+	/**
+	 * This method takes input as List of agvs and a Ticket Object, and based on current locations of both agvs
+	 *  it decides which agv is nearest to serve that ticket and return that Agv
+	 * @param agvs List of Agvs
+	 * @param ticket Ticeket Object 
+	 * @return Agv object optimal to server Ticket
+	 */
 	private Agv getBestAgv(List<Agv> agvs, Ticket ticket){
 		Map<Agv,Integer> distMap = new HashMap<Agv,Integer>();
 		for(Agv agv : agvs){
@@ -177,6 +207,11 @@ public class Scheduler extends Thread {
 		}
 	}*/
 
+	/**
+	 * This method takes agv id as parameter, and checks ticket queue for ticket associated with this id, and returns that Ticket object
+	 * @param Id Agv Id
+	 * @return Ticket Object associated to Agv Id
+	 */
 	private Ticket getFirstTicket(int Id){
 		for(Ticket tick : queue){
 			if(tick.getAgvno() == Id){
@@ -188,6 +223,9 @@ public class Scheduler extends Thread {
 		return null;
 	}
 
+	/**
+	 * This Method fetches all available Agvs and stamps tickets with agv Id in FCFS manner
+	 */
 	private void ticketPoller() { 
 		List<Agv> availableAgvs = getAvailableAgvs();
 		if(availableAgvs.size() > 0) {
@@ -213,6 +251,10 @@ public class Scheduler extends Thread {
 			getBestTicket(agv);
 		}
 	}
+	 */
+	
+	/**
+	 * This method executes when ticket queue has a Ticket, finds best agv to that ticket and assigns.
 	 */
 	public void executor() {
 

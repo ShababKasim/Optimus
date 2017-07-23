@@ -12,8 +12,8 @@ import com.samaylabs.optimus.Dao.DbLogger;
 import com.samaylabs.optimus.Track.models.Node;
 
 /**
- * 
- * @author Shabab
+ * Traffic Manager is a class which depends on agvs and Anchor list of track which then creates a Map of anchor list and hold records of Position of Agv, from which agvs get to know about signals
+ * @author Tulve Shabab Kasim
  *
  */
 public class TrafficManager extends Thread {
@@ -25,6 +25,11 @@ public class TrafficManager extends Thread {
 	private Map<Node,Boolean> parkingStations;
 	Logger log;
 
+	
+	/**
+	 * 
+	 * @param anchors
+	 */
 	public TrafficManager(List<Long> anchors) {
 		signals = new HashMap<Long,Integer>();
 		for(int i=0 ; i < anchors.size() ; i++){
@@ -32,6 +37,12 @@ public class TrafficManager extends Thread {
 		}
 	}
 
+	/**
+	 * 
+	 * @param anchors defined in map
+	 * @param agvs list 
+	 * @param parkingStations map 
+	 */
 	public TrafficManager(List<Long> anchors,List<Agv> agvs, Map<Node,Boolean> parkingStations) {
 		super("Traffic Manager");
 		signals = new Hashtable<Long,Integer>();
@@ -42,48 +53,90 @@ public class TrafficManager extends Thread {
 		}
 	}
 
+	
+	/**
+	 * 
+	 * @param signals
+	 * @param agvs
+	 * @param parkingStations
+	 */
 	public TrafficManager(Map<Long, Integer> signals, List<Agv> agvs, Map<Node, Boolean> parkingStations) {
 		this.signals = signals;
 		this.agvs = agvs;
 		this.parkingStations = parkingStations;
 	}
 
+	/**
+	 * 
+	 */
 	public void stoptManager() {
 		this.stop = true;
 	}
-
+	
+	/**
+	 * 
+	 * @param id
+	 * @return
+	 */
 	public int getSignal(Long id) {
 		return signals.get(id);
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public Map<Long, Integer> getSignals() {
 		return signals;
 	}
 
+	/**
+	 * 
+	 * @param id
+	 * @param agvid
+	 * @return
+	 */
 	public boolean isBlocked(Long id,int agvid) {
 		return (signals.get(id) == -1) ? false : (signals.get(id) == agvid) ? false : true;
 	}
 
-
+	/**
+	 * 
+	 * @param id
+	 * @param value
+	 */
 	public void replaceSignal(Long id , int value) {
 		signals.replace(id,value);
 	}
 
-
+	/**
+	 * 
+	 */
 	public void blockSignal(Long signal,int agvid) {
 		signals.replace(signal,agvid);
 	}
 
-
+	/**
+	 * 
+	 * @param signal anchor value
+	 */
 	public void releaseSignal(Long signal) {
 		signals.replace(signal,-1);
 	}
 
-
+	/**
+	 * 
+	 * @return length of total anchors
+	 */
 	public int getSignalSize() {
 		return signals.size();
 	}
 
+	/**
+	 * 
+	 * @param agvId
+	 * @return List of signals reserved by agv
+	 */
 	public List<Long> getReservedSignals(int agvId) {
 		List<Long> list = new ArrayList<Long>();
 		for(Map.Entry<Long, Integer> entry : signals.entrySet()){
@@ -102,6 +155,12 @@ public class TrafficManager extends Thread {
 		return sigs.toString();
 	}
 
+	/**
+	 * 
+	 * @param anchors list to be reserved
+	 * @param agvId
+	 * @return -1 if all signals in list reserved else id of agv which already reserved anchor.
+	 */
 	public int reserveMine(List<Long> anchors,int agvId) {
 		if(anchors.size() > 0){
 			releaseVisitedMine(anchors,agvId);
@@ -117,6 +176,12 @@ public class TrafficManager extends Thread {
 		return -1;
 	}
 
+	
+	/**
+	 * Releases signals that are no lognger reserved by agvId
+	 * @param reserveList
+	 * @param agvId
+	 */
 	public void releaseVisitedMine(List<Long> reserveList, int agvId) {
 		for(Map.Entry<Long, Integer> entry : signals.entrySet()){
 			if(entry.getValue() == agvId){
@@ -127,6 +192,11 @@ public class TrafficManager extends Thread {
 		}
 	}
 
+	
+	/**
+	 * Releases all signals reserved by input agvid
+	 * @param agvId
+	 */
 	public void releaseMine(int agvId) {
 		for(Map.Entry<Long, Integer> entry : signals.entrySet()){
 			if(entry.getValue() == agvId)
@@ -142,6 +212,10 @@ public class TrafficManager extends Thread {
 		return null;
 	}
 
+	/**
+	 * Run method iterates over list of agvs and reserve signals present in their reserveList, if the signal is reserved by another agv it checks for its availablity, if its availablity is true 
+	 * it turns on the park variable which lets agv to move to parking and clear the path 
+	 */
 	@Override
 	public void run() {
 		log = new DbLogger().getLogger("Traffic Manager");

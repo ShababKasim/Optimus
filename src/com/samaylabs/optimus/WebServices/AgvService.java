@@ -19,6 +19,12 @@ import com.samaylabs.optimus.WebServices.models.AgvData;
 import com.samaylabs.optimus.WebServices.models.AgvUtil;
 import com.samaylabs.optimus.WebServices.models.ListWrapper;
 
+
+/**
+ * Methods in this Class is Called by clients which are related to Agv CURD operations and Ping related services
+ * @author Tulve Shabab Kasim
+ *
+ */
 @WebService(name="AgvDeclaration",serviceName="AgvService", portName="AgvPort")
 public class AgvService {
 
@@ -273,7 +279,6 @@ public class AgvService {
 		return utils;
 	}
 	
-
 	@WebMethod
 	public ListWrapper pingAgv(String ip, int port){
 		ListWrapper log = new ListWrapper();

@@ -4,8 +4,8 @@ import com.samaylabs.optimus.Dao.AgvDao;
 import com.samaylabs.optimus.Track.Path;
 
 /**
- * 
- * @author Shabab
+ * This is threaded class which initilizes statemachine and executes it.
+ * @author Tulve Shabab Kasim
  *
  */
 public class Agv extends Thread {
@@ -17,6 +17,13 @@ public class Agv extends Thread {
 	private boolean stop;
 	private StateMachineAgv stateMachine;
 
+	/**
+	 * Constructor with input parameters
+	 * @param Id of Agv 
+	 * @param name of Agv
+	 * @param ipaddr of Agv
+	 * @param port of Agv
+	 */
 	public Agv(int Id,String name,String ipaddr,int port){
 		this.Id = Id;
 		this.name = name;
@@ -24,7 +31,15 @@ public class Agv extends Thread {
 		this.port = port;
 	}
 	
-
+	/**
+	 * Constructor with input parameters
+	 * @param Id of Agv 
+	 * @param name of Agv
+	 * @param ipaddr of Agv
+	 * @param port of Agv
+	 * @param tmanager Traffic Manager Singleton Object 
+	 * @param path Path Object
+	 */
 	public Agv(int Id,String name,String ipaddr,int port, TrafficManager tmanager, Path path){
 		super(name);
 		this.Id = Id;
@@ -32,8 +47,6 @@ public class Agv extends Thread {
 		this.port = port;
 		this.ipaddr = ipaddr;
 		setStateMachine(new StateMachineAgv(Id,ipaddr,port,tmanager,path));
-//		agvDaoObj = new AgvDao();
-//		agvDaoObj.insert( Id, name, ipaddr, port);
 	}
 
 	public int getAgvId() {
@@ -66,6 +79,9 @@ public class Agv extends Thread {
 		this.stateMachine = stateMachine;
 	}
 
+	/**
+	 * this method makes the stop variables of Agv and StateMachine false to stop its loop.
+	 */
 	public void stopAgv() {
 		stateMachine.setStop();
 		this.stop = true;
@@ -74,7 +90,6 @@ public class Agv extends Thread {
 
 	public void setId(int id) {
 		Id = id;
-//		stateMachine.setid
 	}
 
 	public String getAgvName() {

@@ -24,6 +24,12 @@ import com.samaylabs.optimus.WebServices.models.AgvData;
 import com.samaylabs.optimus.WebServices.models.ListWrapper;
 import com.samaylabs.optimus.WebServices.models.MapWrapper;
 
+
+/**
+ * Methods in this Class is Called by clients which are related to Agv Powering On and Off, Queue
+ * @author Tulve Shabab Kasim
+ *
+ */
 @WebService(name="OptimusDefination",serviceName="OptimusService", portName="OptimusPort")
 public class OptimusService {
 

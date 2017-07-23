@@ -24,7 +24,12 @@ import net.wimpi.modbus.ModbusException;
 import net.wimpi.modbus.ModbusIOException;
 import net.wimpi.modbus.ModbusSlaveException;
 
-
+/**
+ * This class holds the logic based on which behaviour of agv is controlled from server. 
+ * It has execute method which switches between states and changes the behaviour of its respected agv.
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class StateMachineAgv {
 
 	private final int Id;
@@ -70,8 +75,15 @@ public class StateMachineAgv {
 	TransferPacket ptp = new TransferPacket();
 	TransferPacket ctp = new TransferPacket();
 
-
-	StateMachineAgv(int Id,String ipAddress,int port,TrafficManager tmanager, Path path){
+	/**
+	 * CLass Constructor specifying number of objects to create
+	 * @param Id Id of agv associated with this statemachine
+	 * @param ipAddress of agv associated with this statemachine
+	 * @param port  of agv associated with this statemachine
+	 * @param tmanager Traffic Manager Singleton Object.
+	 * @param path Path Object 
+	 */
+	protected StateMachineAgv(int Id,String ipAddress,int port,TrafficManager tmanager, Path path){
 		this.Id = Id;
 		this.ipAddress = ipAddress;
 		this.tManager = tmanager;
@@ -145,6 +157,11 @@ public class StateMachineAgv {
 		return position;
 	}
 
+	/**
+	 * Returns current anchor position of agv on declared map as Node object
+	 * @return Node object associated with anchor number
+	 * @throws ModbusException
+	 */
 	public Node getCurrentPosition() throws ModbusException{
 		return  Path.getNodeById(agvMethods.getCurrentAnchor());
 	}
@@ -315,10 +332,22 @@ public class StateMachineAgv {
 		return true;
 	}
 
+	/**
+	 * This method resets all state oriented variables of Agv. 
+	 * @throws ModbusIOException
+	 * @throws ModbusSlaveException
+	 * @throws ModbusException
+	 */
 	public void resetAgv() throws ModbusIOException, ModbusSlaveException, ModbusException{
 		agvMethods.resetAgv();
 	}
 
+	/**
+	 * As switch case may have same case over a loop, this method prevents unnecessary logging of logs.
+	 * @param info Message to be dumped as log
+	 * @param type Level of message Debug,Info etc.
+	 * @param state current State from which this method is called
+	 */
 	public void logOnce(String info,String type,States state){
 		if(prevLoggedState == null){
 			prevLoggedState = state;
@@ -341,6 +370,10 @@ public class StateMachineAgv {
 		}
 	}
 
+	/**
+	 * This method contains a switch case which alters the behaviour of agv, Each case has its own set of conditions.
+	 * To properlt start this agv Constructor should be properly initilized without any null values.
+	 */
 	public void execute() {
 
 		//		int retrycount = 0;
@@ -357,7 +390,7 @@ public class StateMachineAgv {
 				try {
 					agvMethods.connect();
 					try{
-						position = Path.getNodeById(agvMethods.getCurrentAnchor());
+						position = getCurrentPosition();
 						log.info("Anchor value updated to " + position.getAnchor_id());
 					} catch(NullPointerException e) {
 						errorInfo = "Invalid anchor";
@@ -419,7 +452,7 @@ public class StateMachineAgv {
 						lowCharging = agvMethods.lowCharging();
 						if(position.getAnchor_id() != agvMethods.getCurrentAnchor())
 							log.info("Idle : Agv moved on anchor " + agvMethods.getCurrentAnchor());
-						position = Path.getNodeById(agvMethods.getCurrentAnchor());
+						position = getCurrentPosition();
 						reserveList.set(0,position.getAnchor_id());reserveList.set(1,position.getAnchor_id());
 						reserveList.set(2,position.getAnchor_id());reserveList.set(3,position.getAnchor_id());
 					} catch (NullPointerException e) {
@@ -432,7 +465,7 @@ public class StateMachineAgv {
 					abort = false;
 					uiAbort = false;
 					jobDone = false;
-                                        jump = false;
+                    jump = false;
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {
@@ -446,11 +479,12 @@ public class StateMachineAgv {
 				}
 				log.info("Idle : Starting working for ticket no:" + currentTicket.getTid() + " Agv on position: " + position.getAnchor_id());
 				try {
+					position = getCurrentPosition();
 					agvMethods.setInfoDest(currentTicket.getPdestination());
 				} catch (Exception e3) {
 					prevState = state;
 					state = States.Connection;
-					log.error("Idle : Modbus exception  while transfering destination info to HMI");
+					log.error("Idle : Modbus exception  while transfering destination info to HMI || gettting current position");
 				}
 				int status = ticketResolver(currentTicket);
 				if(status == -1){
@@ -466,7 +500,6 @@ public class StateMachineAgv {
 					utilLog.updateUtilizationLog(Id, "idle", (System.currentTimeMillis()-startTime)/1000);
 					startTime = System.currentTimeMillis();
 				}
-
 				break; 
 
 
@@ -501,7 +534,7 @@ public class StateMachineAgv {
 						agvMethods.startHooking();
 						if(position.getAnchor_id() != agvMethods.getCurrentAnchor())
 							log.info("Drop : Agv moved on anchor " + agvMethods.getCurrentAnchor());
-						position = Path.getNodeById(agvMethods.getCurrentAnchor());
+						position = getCurrentPosition();
 						if(uiAbort){
 							agvMethods.resetAgv();
 							state = States.Idle;
@@ -536,7 +569,7 @@ public class StateMachineAgv {
 				if(!jump) {
 					Node destination = null;
 					try {
-						position = this.getCurrentPosition();
+						position = getCurrentPosition();
 						try{
 							destination = Path.getNodeFromResolverById((int)agvMethods.dropAnchor());
 							this.currentPath = Path.resolveMilestone(Path.getShortestPath(position, destination,dijkstra));
@@ -549,7 +582,7 @@ public class StateMachineAgv {
 							log.error("Drop : Invalid Destination given from HMI");
 							continue;
 						}
-						currentTicket.setSdestination((int)destination.getAnchor_id());
+						currentTicket.setSdestination((int)agvMethods.dropAnchor());
 						ticketDao.updateSdest(currentTicket.getTid() , (int)agvMethods.dropAnchor());
 						agvMethods.setInfoDest(currentTicket.getSdestination());
 						agvMethods.stopHooking();
@@ -814,15 +847,17 @@ public class StateMachineAgv {
 
 
 	/**
-	 * get the list of milestones from ticket and set the state based on ticket
+	 * If this state machine is setted with an Ticket object along with work variable, This method is called.
+	 * It reads the variables of Ticket object and changes the state of state machine,   
 	 * @param ticket from scheduler
+	 * @return -1 if the source is undefined in map, -2 if the destination is undefined in map, 0 if successfully executed
 	 */
 	private final int ticketResolver(Ticket ticket){
 
 		String type = ticket.getType();
 		/* get the list of milestones from ticket and set the state based on ticket */
 
-		Node source = getPosition(); 
+		Node source = position;
 		Node destination = Path.getNodeFromResolverById(currentTicket.getPdestination());
 
 		if(source == null){
@@ -877,6 +912,11 @@ public class StateMachineAgv {
 		return 0;
 	}
 
+	/**
+	 * This method is to specifically for Movement of agv, 
+	 * It checks the current position of agv in current path
+	 * Checks availability of signals to move forward sets move variable accordingly 
+	 */
 	public void pathGiver() {
 
 		/* current = sigs[1],
@@ -916,6 +956,11 @@ public class StateMachineAgv {
 		//		return new TransferPacket(cMile.getSource().getAnchor_id(),cMile.getAction(),cMile.getType(),cMove,nMile.getSource().getAnchor_id(),nMile.getAction(),nMile.getType(),nMove);
 	}
 
+	/**
+	 * This method is to specifically for Movement of agv, 
+	 * it iterates throughout the current path assigned to statemachine until some break conditions are satisfies.
+	 * Breakes if: Abor is true made by scheduler, UI abort done from userInterface, If agv takes wrong path.
+	 */
 	public void agvMover() {
 
 		try{
@@ -974,7 +1019,7 @@ public class StateMachineAgv {
 				/*End: Check if Agv Confronts Error like out of track and Obstacle*/
 
 				try {
-					position = Path.getNodeById(agvMethods.getCurrentAnchor());
+					position = getCurrentPosition();
 				} catch (Exception e1) {
 					prevState = state;
 					state = States.Connection;

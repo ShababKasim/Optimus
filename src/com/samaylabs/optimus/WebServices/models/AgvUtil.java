@@ -1,5 +1,11 @@
 package com.samaylabs.optimus.WebServices.models;
 
+
+/**
+ * This Class is POJO to store Agv utility data which is displayed on Dashboard
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class AgvUtil {
 
 	private int id;
@@ -10,6 +16,15 @@ public class AgvUtil {
 	private long tickets;
 	private long error;
 	
+	/**
+	 * 
+	 * @param id
+	 * @param disconnected
+	 * @param working
+	 * @param idle
+	 * @param tickets
+	 * @param error
+	 */
 	public AgvUtil(int id, long disconnected, long working, long idle, long tickets, long error) {
 		super();
 		this.id = id;

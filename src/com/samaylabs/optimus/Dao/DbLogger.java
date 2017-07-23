@@ -18,7 +18,7 @@ public class DbLogger {
 	 */
 	public Logger getLogger(String user){
 		Logger log = Logger.getLogger("Optimus");
-		PropertyConfigurator.configure("src/main.resources/log4j.properties");
+		PropertyConfigurator.configure("src/main/resources/log4j.properties");
 		MDC.put("user", user); 
 		return log;
 	}

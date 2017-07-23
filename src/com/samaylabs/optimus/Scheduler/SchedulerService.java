@@ -21,7 +21,12 @@ import com.samaylabs.optimus.Track.Path;
 import com.samaylabs.optimus.Track.models.Node;
 import com.samaylabs.optimus.Transport.Agv;
 
-public class SchedulerService  extends Thread {
+/**
+ * This class is about Working for a ticket in defined manner setteed by the scheduler.
+ * @author Tulve Shabab Kasim
+ *
+ */
+public class SchedulerService extends Thread {
 
 	private final Agv agv;
 	private  AtomicInteger ticketCount;
@@ -35,6 +40,13 @@ public class SchedulerService  extends Thread {
 
 	Logger log;
 
+	/**
+	 * Parameterized Constructor
+	 * @param agv Agv object 
+	 * @param ticketCount atomic variable for ticket count 
+	 * @param parkingStations List of Map of parking stations 
+	 * @param path path Object for track calculation
+	 */
 	public SchedulerService(Agv agv, AtomicInteger ticketCount, Map<Node,Boolean> parkingStations, Path path) {
 		super("SService " + agv.getAgvId());
 		this.agv = agv;
@@ -92,6 +104,9 @@ public class SchedulerService  extends Thread {
 		agv.getStateMachine().setAbort(true);
 	}
 
+	/**
+	 * This Method checks for availablity of Agv and Ticket, if so it initilizes an onject to assign ticket to agv.
+	 */
 	@Override
 	public void run() {
 
@@ -148,6 +163,10 @@ public class SchedulerService  extends Thread {
 		log.info("Stopped Agv " + agv.getAgvId());
 	}
 
+	/**
+	 * This method is used to create dateticme based combination of variable
+	 * @return datetime long variable
+	 */
 	private long getUid(){
 		Date date = new Date();
 		SimpleDateFormat formatter = new SimpleDateFormat ("yyyyMMddhhmmss");
@@ -226,6 +245,10 @@ public class SchedulerService  extends Thread {
 		return 0;
 	}
 
+	/**
+	 * This method return Node object of parking spot defined in map nearest to Agvs current position
+	 * @return Node object of nearest parking station
+	 */
 	private Node getNearestParkingStation(){
 
 		int freeParkCount = 0;
@@ -247,6 +270,10 @@ public class SchedulerService  extends Thread {
 		}
 	}
 
+	/**
+	 * This method return Node object of parking spot from list input from parameter
+	 * @return Node object of nearest parking station
+	 */
 	private Node getShortestParkingFromAvailable(List<Node> parkingNodes){
 		Map<Node,Integer> distMap = new HashMap<Node,Integer>();
 		for(Node node : parkingNodes){

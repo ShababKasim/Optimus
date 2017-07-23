@@ -17,8 +17,8 @@ import com.samaylabs.optimus.Track.models.Node;
 import com.samaylabs.optimus.Track.models.NodeResolver;
 
 /**
- * 
- * @author Shabab
+ * This class contains all operations related to defination and Application of Trace defined.
+ * @author Tulve Shabab kasim
  *
  */
 public class Graph implements DbConstants {
@@ -27,7 +27,7 @@ public class Graph implements DbConstants {
 	private List<Node> nodes = new ArrayList<Node>();
 	private List<Edge> edges = new ArrayList<Edge>();
 	private List<Milestone> milestones = new ArrayList<Milestone>();
-	private List<NodeResolver> nodeRessolver = new ArrayList<NodeResolver>();
+	private List<NodeResolver> nodeResolver = new ArrayList<NodeResolver>();
 	
 	private DbConnection db = new DbConnection();
 	private ResultSet resultset;
@@ -50,12 +50,20 @@ public class Graph implements DbConstants {
 		return edges;
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
 	public List<NodeResolver> getNodeRessolver() {
-		return nodeRessolver;
+		return nodeResolver;
 	}
 
+	/**
+	 * 
+	 * @param nodeRessolver
+	 */
 	public void setNodeRessolver(List<NodeResolver> nodeRessolver) {
-		this.nodeRessolver = nodeRessolver;
+		this.nodeResolver = nodeRessolver;
 	}
 
 	/**
@@ -128,6 +136,10 @@ public class Graph implements DbConstants {
 
 	}
 
+	/**
+	 * Fetches node Resolver data stored in database and returns List of POJO objects.
+	 * @return List of NodeResolver Object
+	 */
 	public List<NodeResolver> getNodeResolverFromDb(){
 		Statement statement = db.getStatement();
 		List<NodeResolver> nodesResolver = null;
@@ -153,7 +165,7 @@ public class Graph implements DbConstants {
 
 
 	/**
-	 * 
+	 * Fetches node data stored in database and returns List of POJO objects.
 	 * @return List of nodes stored in database.
 	 */
 	public List<Node> getNodeFromDb() {
@@ -175,6 +187,7 @@ public class Graph implements DbConstants {
 	}
 
 	/**
+	 * Fetches Edge data stored in database and returns List of POJO objects.
 	 * @method gets Edges information stored in database
 	 * @param nodes Needs list of vertex so that it can extract legitimate data
 	 * @return List of edges after fetching it from database
@@ -223,6 +236,11 @@ public class Graph implements DbConstants {
 		return (radian > Math.PI) ? (360 - (180*(radian)/Math.PI)) * -1 : (180*(radian)/Math.PI);
 	}	
 
+	/**
+	 * This method takes input angle and return int value for left right or straight
+	 * @param angle
+	 * @return 1 for straight 2 for left 3 for right
+	 */
 	public int getType(double angle){
 		angle *= (angle > 0) ? 1 : -1;
 		return (angle > 90) ? 2 : 3;
@@ -257,7 +275,7 @@ public class Graph implements DbConstants {
 	}
 
 	/**
-	 * 
+	 * This method iterates complete defined map and using vector method decides turns and type information, and returns the decisions in form of list of milestones  
 	 * @param nodes list of nodes
 	 * @param edges list of edges
 	 * @return list of milestones with action code and type

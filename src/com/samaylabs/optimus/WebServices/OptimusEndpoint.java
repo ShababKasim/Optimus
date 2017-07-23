@@ -2,6 +2,12 @@ package com.samaylabs.optimus.WebServices;
 
 import javax.xml.ws.Endpoint;
 
+
+/**
+ * This is endpoint class which publishes optimus classes over web service as SOAP
+ * @author Tulve Shabab Kasim
+ *
+ */
 public class OptimusEndpoint {
 
 	public static void main(String[] args) {
